@@ -1,4 +1,4 @@
-package apis
+package schemas
 
 type ServiceInstanceProvisionRequest struct {
 	ServiceId        string            `json:"service_id"`
