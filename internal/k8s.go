@@ -40,7 +40,7 @@ func GetTemplateInstance(c client.Client, name types.NamespacedName) (*tmaxv1.Te
 
 func GetTemplateInstanceList(c client.Client) (*tmaxv1.TemplateInstanceList, error) {
 	templateInstances := &tmaxv1.TemplateInstanceList{}
-	if err := c.List(context.TODO(), templateInstanceList); err != nil {
+	if err := c.List(context.TODO(), templateInstances); err != nil {
 		return nil, err
 	}
 
