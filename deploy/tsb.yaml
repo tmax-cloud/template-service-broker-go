@@ -14,7 +14,51 @@ spec:
       labels:
         app: template-service-broker
     spec:
+      serviceAccountName: tsb-sa
       containers:
       - image: 172.22.11.2:30500/tsb:0.0.1
         name: tsb
         imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: template-service-broker
+  name: template-service-broker
+spec:
+  selector:
+    app: template-service-broker
+  ports:
+  - port: 80
+    targetPort: 8081
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: template-service-broker
+  name: tsb-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tsb-role
+rules:
+- apiGroups: ["tmax.io"]
+  resources: ["templates", "templateinstances"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tsb-rb
+subjects:
+- kind: ServiceAccount
+  name: tsb-sa
+  apiGroup: ""
+roleRef:
+  kind: Role
+  name: tsb-role
+  apiGroup: rbac.authorization.k8s.io
