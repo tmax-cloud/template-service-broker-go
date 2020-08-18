@@ -2,17 +2,19 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"template-service-broker/pkg/server/apis"
+
 	"github.com/gorilla/mux"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
-	"net/http"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"template-service-broker/pkg/server/apis"
 )
 
 const (
 	port = 8081
 
 	apiPathPrefix         = "/v2/"
+	serviceCatalogPrefix  = "/catalog"
 	serviceInstancePrefix = "/service_instances/{instanceId}"
 )
 
@@ -26,6 +28,7 @@ func main() {
 	apiRouter := router.PathPrefix(apiPathPrefix).Subrouter()
 
 	//catalog
+	apiRouter.HandleFunc(serviceCatalogPrefix, apis.GetCatalog).Methods("GET")
 
 	//provision
 	apiRouter.HandleFunc(serviceInstancePrefix, apis.ProvisionServiceInstance).Methods("PUT")
