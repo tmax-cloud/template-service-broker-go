@@ -4,7 +4,7 @@ import (
 	tmaxv1 "github.com/youngind/hypercloud-operator/pkg/apis/tmax/v1"
 )
 
-type CatalogGetResponse struct {
+type Catalog struct {
 	Services []Service `json:"services`
 }
 

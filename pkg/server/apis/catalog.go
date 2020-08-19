@@ -21,7 +21,7 @@ var logCatalog = logf.Log.WithName("Catalog")
 func GetCatalog(w http.ResponseWriter, r *http.Request) {
 
 	// set response
-	response := &schemas.CatalogGetResponse{}
+	response := &schemas.Catalog{}
 	w.Header().Set("Content-Type", "application/json")
 
 	//add templatelist schema
