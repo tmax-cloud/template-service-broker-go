@@ -3,7 +3,7 @@ package schemas
 type ServiceInstanceProvisionRequest struct {
 	ServiceId        string            `json:"service_id"`
 	PlanId           string            `json:"plan_id"`
-	Context          map[string]string `json:"context,omitempty"`
+	Context          Context           `json:"context,omitempty"`
 	OrganizationGuid string            `json:"organization_guid"`
 	SpaceGuid        string            `json:"space_guid"`
 	Parameters       map[string]string `json:"parameters,omitempty"`
