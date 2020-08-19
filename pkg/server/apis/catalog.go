@@ -110,7 +110,7 @@ func MakeService(template *tmaxv1.Template) schemas.Service {
 	for _, object := range template.Objects {
 		var raw map[string]interface{}
 		if err := json.Unmarshal(object.Raw, &raw); err != nil {
-			logBind.Error(err, "cannot get object info")
+			logCatalog.Error(err, "cannot get object info")
 		}
 		//get kind, namespace, name of object
 		kind := raw["kind"].(string)
