@@ -848,6 +848,8 @@ github.com/xlab/treeprint v0.0.0-20180616005107-d6fb6747feb6/go.mod h1:ce1O1j6Ut
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/youngind/hypercloud-operator v0.0.0-20200804063515-99c9d877a8ef h1:hwvyFCmL3nPU9BywA6KuksbHNVyDWmAP4u5cY37jWZA=
 github.com/youngind/hypercloud-operator v0.0.0-20200804063515-99c9d877a8ef/go.mod h1:1YD9ZCOlqddvun23vQTV17yHCYvvpMOVxhCHQg+jkRQ=
+github.com/youngind/hypercloud-operator v0.0.0-20200807043152-a3d53c684400 h1:Y2siEmjfQUz+qsROyakOUFm6KSwMEpD/vLkZcgexc0I=
+github.com/youngind/hypercloud-operator v0.0.0-20200807043152-a3d53c684400/go.mod h1:1YD9ZCOlqddvun23vQTV17yHCYvvpMOVxhCHQg+jkRQ=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yvasiyarov/go-metrics v0.0.0-20140926110328-57bccd1ccd43/go.mod h1:aX5oPXxHm3bOH+xeAttToC8pqch2ScQN/JoXYupl6xs=

@@ -19,10 +19,9 @@ func GetTemplate(c client.Client, name types.NamespacedName) (*tmaxv1.Template, 
 	return template, nil
 }
 
-func GetTemplateList(c client.Client) (*tmaxv1.TemplateList, error) {
-
+func GetTemplateList(c client.Client, namespace string) (*tmaxv1.TemplateList, error) {
 	templates := &tmaxv1.TemplateList{}
-	if err := c.List(context.TODO(), templates); err != nil {
+	if err := c.List(context.TODO(), templates, client.InNamespace(namespace)); err != nil {
 		return nil, err
 	}
 
@@ -38,9 +37,9 @@ func GetTemplateInstance(c client.Client, name types.NamespacedName) (*tmaxv1.Te
 	return templateInstance, nil
 }
 
-func GetTemplateInstanceList(c client.Client) (*tmaxv1.TemplateInstanceList, error) {
+func GetTemplateInstanceList(c client.Client, namespace string) (*tmaxv1.TemplateInstanceList, error) {
 	templateInstances := &tmaxv1.TemplateInstanceList{}
-	if err := c.List(context.TODO(), templateInstances); err != nil {
+	if err := c.List(context.TODO(), templateInstances, client.InNamespace(namespace)); err != nil {
 		return nil, err
 	}
 
