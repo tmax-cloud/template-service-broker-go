@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"template-service-broker/pkg/server/apis"
-
 	"github.com/gorilla/mux"
 	"github.com/jwkim1993/template-service-broker/pkg/server/apis"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
+	"net/http"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 

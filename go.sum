@@ -865,6 +865,7 @@ github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18/go.mod h1:UETIi67q
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xlab/handysort v0.0.0-20150421192137-fb3537ed64a1/go.mod h1:QcJo0QPSfTONNIgpN5RA8prR7fF8nkF6cTWTcNerRO8=
 github.com/xlab/treeprint v0.0.0-20180616005107-d6fb6747feb6/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=
+github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/youngind/hypercloud-operator v0.0.0-20200804063515-99c9d877a8ef h1:hwvyFCmL3nPU9BywA6KuksbHNVyDWmAP4u5cY37jWZA=
 github.com/youngind/hypercloud-operator v0.0.0-20200804063515-99c9d877a8ef/go.mod h1:1YD9ZCOlqddvun23vQTV17yHCYvvpMOVxhCHQg+jkRQ=
 github.com/youngind/hypercloud-operator v0.0.0-20200807043152-a3d53c684400 h1:Y2siEmjfQUz+qsROyakOUFm6KSwMEpD/vLkZcgexc0I=
