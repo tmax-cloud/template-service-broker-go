@@ -9,6 +9,7 @@ import (
 	"github.com/youngind/hypercloud-operator/pkg/apis"
 	tmaxv1 "github.com/youngind/hypercloud-operator/pkg/apis/tmax/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -70,7 +71,9 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		Namespace: ns,
 		Name:      m.ServiceId,
 	})
-	if err != nil || !isPlanValid(template, m.PlanId) { // cannot find template or plan
+
+	plan := &tmaxv1.PlanSpec{}
+	if err != nil || !isPlanValid(template, m.PlanId, plan) { // cannot find template or plan
 		log.Error(err, "error occurs while getting template")
 		respondError(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
@@ -80,6 +83,9 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	// update template parameters using plan
+	updatePlanParams(template, plan)
 
 	// create template instance
 	if _, err = internal.CreateTemplateInstance(c, template, m, serviceInstanceId); err != nil {
@@ -128,14 +134,24 @@ func respondError(w http.ResponseWriter, statusCode int, message *schemas.Error)
 	}
 }
 
-func isPlanValid(template *tmaxv1.Template, planId string) bool {
+func isPlanValid(template *tmaxv1.Template, planId string, plan *tmaxv1.PlanSpec) bool {
 	isValid := false
 	for i := range template.Plans {
 		if template.Plans[i].Id == planId {
 			isValid = true
+			*plan = template.Plans[i]
 			break
 		}
 	}
 
 	return isValid
+}
+
+func updatePlanParams(template *tmaxv1.Template, plan *tmaxv1.PlanSpec) {
+	planParamMap := &plan.Schemas.ServiceInstance.Create.Parameters
+	for i := range template.Parameters {
+		if val, ok := (*planParamMap)[template.Parameters[i].Name]; ok {
+			template.Parameters[i].Value = intstr.Parse(val)
+		}
+	}
 }
