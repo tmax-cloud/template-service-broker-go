@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	tmaxv1 "github.com/youngind/hypercloud-operator/pkg/apis/tmax/v1"
+	tmaxv1 "github.com/jwkim1993/hypercloud-operator/pkg/apis/tmax/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -101,7 +101,7 @@ func MakeService(template *tmaxv1.Template) schemas.Service {
 			"urlDescription":      template.UrlDescription,
 			"markdownDescription": template.MarkDownDescription,
 			"providerDisplayName": template.Provider,
-			"recommend":           strconv.FormatBool(template.Recommand),
+			"recommend":           strconv.FormatBool(template.Recommend),
 		},
 		PlanUpdateable: false,
 		Plans:          template.Plans,
