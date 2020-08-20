@@ -14,12 +14,12 @@ type ServiceBindingResouceObject struct {
 }
 
 type ServiceBindingResponse struct {
-	Metadata        ServiceBindingMetadata    `json:"metadata,omitempty"`
-	Credentials     map[string]string         `json:"credentials,omitempty"`
-	SyslogDrainUrl  string                    `json:"syslog_drain_url,omitempty"`
-	RouteServiceUrl string                    `json:"route_service_url,omitempty"`
-	VolumeMounts    ServiceBindingVolumeMount `json:"volume_mounts,omitempty"`
-	Endpoints       ServiceBindingEndpoint    `json:"endpoints,omitempty"`
+	Metadata        ServiceBindingMetadata      `json:"metadata,omitempty"`
+	Credentials     map[string]interface{}      `json:"credentials,omitempty"`
+	SyslogDrainUrl  string                      `json:"syslog_drain_url,omitempty"`
+	RouteServiceUrl string                      `json:"route_service_url,omitempty"`
+	VolumeMounts    []ServiceBindingVolumeMount `json:"volume_mounts,omitempty"`
+	Endpoints       []ServiceBindingEndpoint    `json:"endpoints,omitempty"`
 }
 
 type ServiceBindingMetadata struct {
