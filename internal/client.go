@@ -1,7 +1,7 @@
 package internal
 
 import (
-	tmaxv1 "github.com/youngind/hypercloud-operator/pkg/apis/tmax/v1"
+	tmaxv1 "github.com/jwkim1993/hypercloud-operator/pkg/apis/tmax/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

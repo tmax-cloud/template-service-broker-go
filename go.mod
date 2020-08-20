@@ -4,9 +4,9 @@ go 1.14
 
 require (
 	github.com/gorilla/mux v1.7.2
+	github.com/jwkim1993/hypercloud-operator v0.0.0-20200819055306-435abfd56822
 	github.com/operator-framework/operator-sdk v0.17.1
 	github.com/tidwall/gjson v1.6.0
-	github.com/youngind/hypercloud-operator v0.0.0-20200807043152-a3d53c684400
 	k8s.io/api v0.17.4
 	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v12.0.0+incompatible
