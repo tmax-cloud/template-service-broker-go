@@ -1,4 +1,4 @@
-module template-service-broker
+module github.com/jwkim1993/template-service-broker
 
 go 1.14
 

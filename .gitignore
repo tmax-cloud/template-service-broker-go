@@ -1,5 +1,6 @@
 # Temporary Build Files
-build
+build/_output
+build/_test
 ### IntelliJ ###
 .idea/*
 *.iml
