@@ -3,4 +3,4 @@ kind: ClusterServiceBroker
 metadata:
   name: hyperbroker4
 spec:
-        url: 'http://{tsb_ip}:{tsb_port}'
+  url: 'http://{tsb_ip}:{tsb_port}'
