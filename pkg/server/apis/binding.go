@@ -43,6 +43,12 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	instanceNameSpace, err := internal.Namespace()
 	if err != nil {
 		logBind.Error(err, "cannot get namespace")
+		respondError(w, http.StatusInternalServerError, &schemas.Error{
+			Error:            "InternalServerError",
+			Description:      "cannot get namespace. Check it is operated on cluster.",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		})
 	}
 
 	//add template & template instance schema
@@ -51,6 +57,12 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	SchemeBuilder := runtime.NewSchemeBuilder()
 	if err := SchemeBuilder.AddToScheme(s); err != nil {
 		logBind.Error(err, "cannot add Template/Templateinstance scheme")
+		respondError(w, http.StatusInternalServerError, &schemas.Error{
+			Error:            "InternalServerError",
+			Description:      "cannot add Template/Templateinstance scheme",
+			InstanceUsable:   false,
+			UpdateRepeatable: true,
+		})
 		return
 	}
 
@@ -58,6 +70,12 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	c, err := internal.Client(client.Options{Scheme: s})
 	if err != nil {
 		logBind.Error(err, "cannot connect k8s api server")
+		respondError(w, http.StatusInternalServerError, &schemas.Error{
+			Error:            "InternalServerError",
+			Description:      "cannot connect to k8s api server",
+			InstanceUsable:   false,
+			UpdateRepeatable: true,
+		})
 		return
 	}
 
@@ -65,6 +83,12 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	templateInstance, err := internal.GetTemplateInstance(c, types.NamespacedName{Name: instanceName, Namespace: instanceNameSpace})
 	if err != nil {
 		logBind.Error(err, "cannot get templateinstance info")
+		respondError(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "BadRequest",
+			Description:      "cannot find templateinstance on the namespace",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		})
 		return
 	}
 
@@ -73,6 +97,13 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 		var raw map[string]interface{}
 		if err := json.Unmarshal(object.Raw, &raw); err != nil {
 			logBind.Error(err, "cannot get object info")
+			respondError(w, http.StatusBadRequest, &schemas.Error{
+				Error:            "BadRequest",
+				Description:      "cannot find object info of template",
+				InstanceUsable:   false,
+				UpdateRepeatable: false,
+			})
+			return
 		}
 
 		//get kind, namespace, name of object
@@ -85,7 +116,12 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 			service := &corev1.Service{}
 			if err := c.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, service); err != nil {
 				logBind.Error(err, "error occurs while getting service info")
-				w.WriteHeader(http.StatusBadRequest)
+				respondError(w, http.StatusBadRequest, &schemas.Error{
+					Error:            "BadRequest",
+					Description:      "cannot get service info of template",
+					InstanceUsable:   false,
+					UpdateRepeatable: false,
+				})
 				return
 			}
 			if service.Spec.Type == corev1.ServiceTypeLoadBalancer {
@@ -107,7 +143,12 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 			secret := &corev1.Secret{}
 			if err := c.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, secret); err != nil {
 				logBind.Error(err, "error occurs while getting secret info")
-				w.WriteHeader(http.StatusBadRequest)
+				respondError(w, http.StatusBadRequest, &schemas.Error{
+					Error:            "BadRequest",
+					Description:      "cannot get secret info of template",
+					InstanceUsable:   false,
+					UpdateRepeatable: false,
+				})
 				return
 			}
 			for key, val := range secret.Data {
