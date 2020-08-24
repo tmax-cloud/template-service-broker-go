@@ -1,0 +1,7 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceBroker
+metadata:
+  name: hyperbroker4
+  namespace: tsb-test
+spec:
+  url: 'http://10.105.220.55:80'
