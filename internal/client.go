@@ -32,6 +32,10 @@ func AddKnownTypes(scheme *runtime.Scheme) error {
 		&tmaxv1.Template{},
 		&tmaxv1.TemplateList{},
 	)
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&tmaxv1.ClusterTemplate{},
+		&tmaxv1.ClusterTemplateList{},
+	)
 	v1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }
