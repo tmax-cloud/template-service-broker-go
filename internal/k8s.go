@@ -55,29 +55,46 @@ func GetTemplateInstanceList(c client.Client, namespace string) (*tmaxv1.Templat
 	return templateInstances, nil
 }
 
-func CreateTemplateInstance(c client.Client, template *tmaxv1.Template,
+func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	request schemas.ServiceInstanceProvisionRequest, serviceInstanceId string) (*tmaxv1.TemplateInstance, error) {
-	for idx, param := range template.Parameters {
+	var parameters []tmaxv1.ParamSpec
+	template := &tmaxv1.Template{}
+	clusterTemplate := &tmaxv1.ClusterTemplate{}
+	template.Parameters = []tmaxv1.ParamSpec{}
+	clusterTemplate.Parameters = []tmaxv1.ParamSpec{}
+
+	switch obj.(type) {
+	case *tmaxv1.Template:
+		template = obj.(*tmaxv1.Template)
+		parameters = template.Parameters[0:]
+	case *tmaxv1.ClusterTemplate:
+		clusterTemplate = obj.(*tmaxv1.ClusterTemplate)
+		parameters = clusterTemplate.Parameters[0:]
+	}
+
+	for idx, param := range parameters {
 		// if param in plan
 		if val, ok := request.Parameters[param.Name]; ok { // if a param was given
-			template.Parameters[idx].Value = intstr.Parse(val)
+			parameters[idx].Value = intstr.Parse(val)
 		} else if param.Required { // if not found && the param was required
 			return nil, errors.New(fmt.Sprintf("parameter %s must be included", param.Name))
 		}
 	}
 
 	// name format is serviceId.planId.serviceInstanceId
-	name := fmt.Sprintf("%s.%s.%s", request.ServiceId, request.PlanId, serviceInstanceId)
+	name := serviceInstanceId
+	//name := fmt.Sprintf("%s.%s.%s", request.ServiceId, request.PlanId, serviceInstanceId)
 	log.Info(fmt.Sprintf("service instance name: %s", name))
 
 	// form template instance
 	templateInstance := &tmaxv1.TemplateInstance{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: template.Namespace,
+			Namespace: namespace,
 		},
 		Spec: tmaxv1.TemplateInstanceSpec{
-			Template: *template,
+			Template:        *template,
+			ClusterTemplate: *clusterTemplate,
 		},
 	}
 
@@ -101,6 +118,31 @@ func CreateTemplateInstance(c client.Client, template *tmaxv1.Template,
 	}
 
 	return existingTemplateInstance, nil
+}
+
+func DeleteTemplateInstance(c client.Client, templateInstance *tmaxv1.TemplateInstance) error {
+	if err := c.Delete(context.TODO(), templateInstance); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetClusterTemplate(c client.Client, name types.NamespacedName) (*tmaxv1.ClusterTemplate, error) {
+	clusterTemplate := &tmaxv1.ClusterTemplate{}
+	if err := c.Get(context.TODO(), name, clusterTemplate); err != nil {
+		return nil, err
+	}
+
+	return clusterTemplate, nil
+}
+
+func GetClusterTemplateList(c client.Client) (*tmaxv1.ClusterTemplateList, error) {
+	clusterTemplates := &tmaxv1.ClusterTemplateList{}
+	if err := c.List(context.TODO(), clusterTemplates); err != nil {
+		return nil, err
+	}
+
+	return clusterTemplates, nil
 }
 
 func Namespace() (string, error) {

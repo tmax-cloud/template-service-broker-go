@@ -51,7 +51,7 @@ func GetCatalog(w http.ResponseWriter, r *http.Request) {
 
 	for _, template := range templateList.Items {
 		//make service
-		service := MakeService(&template)
+		service := MakeService(template.Name, &template.TemplateSpec)
 
 		//if empty plan, make default plan
 		if len(template.Plans) == 0 {
@@ -68,46 +68,90 @@ func GetCatalog(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func MakeService(template *tmaxv1.Template) schemas.Service {
-	//default value setting, if not set
-	if template.ShortDescription == "" {
-		template.ShortDescription = template.Name
+func GetClusterCatalog(w http.ResponseWriter, r *http.Request) {
+
+	// set response
+	response := &schemas.Catalog{}
+	w.Header().Set("Content-Type", "application/json")
+
+	//add templatelist schema
+	s := scheme.Scheme
+	internal.AddKnownTypes(s)
+	SchemeBuilder := runtime.NewSchemeBuilder()
+	if err := SchemeBuilder.AddToScheme(s); err != nil {
+		logCatalog.Error(err, "cannot add TemplateList scheme")
 	}
-	if template.ImageUrl == "" {
-		template.ImageUrl = "https://folo.co.kr/img/gm_noimage.png"
+
+	// connect k8s client
+	c, err := internal.Client(client.Options{Scheme: s})
+	if err != nil {
+		logCatalog.Error(err, "cannot connect k8s api server")
 	}
-	if template.LongDescription == "" {
-		template.LongDescription = template.Name
+
+	// get templatelist
+	clusterTemplateList, err := internal.GetClusterTemplateList(c)
+	if err != nil {
+		logCatalog.Error(err, "cannot get clustertemplateList info")
 	}
-	if template.UrlDescription == "" {
-		template.UrlDescription = template.Name
+
+	for _, template := range clusterTemplateList.Items {
+		//make service
+		service := MakeService(template.Name, &template.TemplateSpec)
+
+		//if empty plan, make default plan
+		if len(template.Plans) == 0 {
+			plan := tmaxv1.PlanSpec{
+				Id:          template.Name + "-plan-default",
+				Name:        template.Name + "-plan-default",
+				Description: template.Name + "-plan-default",
+			}
+			service.Plans = append(service.Plans, plan)
+		}
+		response.Services = append(response.Services, service)
 	}
-	if template.MarkDownDescription == "" {
-		template.MarkDownDescription = template.Name
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec) schemas.Service {
+	if templateSpec.ShortDescription == "" {
+		templateSpec.ShortDescription = templateName
 	}
-	if template.Provider == "" {
-		template.Provider = "tmax"
+	if templateSpec.ImageUrl == "" {
+		templateSpec.ImageUrl = "https://folo.co.kr/img/gm_noimage.png"
+	}
+	if templateSpec.LongDescription == "" {
+		templateSpec.LongDescription = templateName
+	}
+	if templateSpec.UrlDescription == "" {
+		templateSpec.UrlDescription = templateName
+	}
+	if templateSpec.MarkDownDescription == "" {
+		templateSpec.MarkDownDescription = templateName
+	}
+	if templateSpec.Provider == "" {
+		templateSpec.Provider = "tmax"
 	}
 	//create service struct
 	service := schemas.Service{
-		Name:        template.Name,
-		Id:          template.Name,
-		Description: template.ShortDescription,
-		Tags:        template.Tags,
+		Name:        templateName,
+		Id:          templateName,
+		Description: templateSpec.ShortDescription,
+		Tags:        templateSpec.Tags,
 		Bindable:    false,
 		Metadata: map[string]string{
-			"imageUrl":            template.ImageUrl,
-			"longDescription":     template.LongDescription,
-			"urlDescription":      template.UrlDescription,
-			"markdownDescription": template.MarkDownDescription,
-			"providerDisplayName": template.Provider,
-			"recommend":           strconv.FormatBool(template.Recommend),
+			"imageUrl":            templateSpec.ImageUrl,
+			"longDescription":     templateSpec.LongDescription,
+			"urlDescription":      templateSpec.UrlDescription,
+			"markdownDescription": templateSpec.MarkDownDescription,
+			"providerDisplayName": templateSpec.Provider,
+			"recommend":           strconv.FormatBool(templateSpec.Recommend),
 		},
 		PlanUpdateable: false,
-		Plans:          template.Plans,
+		Plans:          templateSpec.Plans,
 	}
 	//Bindable check
-	for _, object := range template.Objects {
+	for _, object := range templateSpec.Objects {
 		var raw map[string]interface{}
 		if err := json.Unmarshal(object.Raw, &raw); err != nil {
 			logCatalog.Error(err, "cannot get object info")
