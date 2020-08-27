@@ -535,6 +535,8 @@ github.com/jwkim1993/hypercloud-operator v0.0.0-20200819055306-435abfd56822 h1:b
 github.com/jwkim1993/hypercloud-operator v0.0.0-20200819055306-435abfd56822/go.mod h1:Sx01Ve+1OSOPqLPPPP0ff9sRd/tyOTiKfqcMmDVeFA4=
 github.com/jwkim1993/hypercloud-operator v0.0.0-20200824035846-4d34d72ae4cd h1:DHVKktXQ+PkZpx4vsb4fEkW4s6+WKpuwT+/mQuug/OY=
 github.com/jwkim1993/hypercloud-operator v0.0.0-20200824035846-4d34d72ae4cd/go.mod h1:Sx01Ve+1OSOPqLPPPP0ff9sRd/tyOTiKfqcMmDVeFA4=
+github.com/jwkim1993/hypercloud-operator v0.0.0-20200825064540-f74a98baf3f7 h1:rAa2DZ3dSVciNLsF1DZYjeEcbvctTC9EgcPjs/34hBA=
+github.com/jwkim1993/hypercloud-operator v0.0.0-20200825064540-f74a98baf3f7/go.mod h1:Sx01Ve+1OSOPqLPPPP0ff9sRd/tyOTiKfqcMmDVeFA4=
 github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
 github.com/karrick/godirwalk v1.10.12/go.mod h1:RoGL9dQei4vP9ilrpETWE8CLOZ1kiN0LhBygSwrAsHA=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
@@ -593,6 +595,7 @@ github.com/mattn/go-shellwords v1.0.10/go.mod h1:EZzvwXDESEeg03EKmM+RmDnNOPKG4lL
 github.com/mattn/go-sqlite3 v1.9.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/mattn/go-sqlite3 v1.10.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/mattn/go-sqlite3 v1.12.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
+github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2/go.mod h1:eD9eIE7cdwcMi9rYluz88Jz2VyhSmden33/aXg4oVIY=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
