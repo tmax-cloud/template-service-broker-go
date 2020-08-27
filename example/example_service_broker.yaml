@@ -4,4 +4,4 @@ metadata:
   name: hyperbroker4
   namespace: tsb-test
 spec:
-  url: 'http://10.105.220.55:80'
+  url: 'http://10.109.227.50:80'
