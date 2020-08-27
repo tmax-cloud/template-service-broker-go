@@ -47,8 +47,11 @@ metadata:
   name: tsb-role
 rules:
 - apiGroups: ["tmax.io"]
-  resources: ["templates", "templateinstances"]
+  resources: ["templates", "templateinstances", "clustertemplates"]
   verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["secrets", "services"]
+  verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
