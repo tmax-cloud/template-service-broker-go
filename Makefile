@@ -7,23 +7,30 @@ PACKAGE_NAME  = github.com/jwkim1993/template-service-broker
 
 SERVICE_BROKER_NAME  = tsb
 SERVICE_BROKER_IMG   = $(REGISTRY)/$(SERVICE_BROKER_NAME):$(VERSION)
+CLUSTER_SERVICE_BROKER_IMG = $(REGISTRY)/cluster-$(SERVICE_BROKER_NAME):$(VERSION)
 
 BIN = ./build/_output/bin
 
-.PHONY: build build-tsb
-build: build-tsb
+.PHONY: build build-tsb build-cluster-tsb
+build: build-tsb build-cluster-tsb
 
 build-tsb:
-	GOOS=linux CGO_ENABLED=0 go build -o $(BIN)/template-service-broker $(PACKAGE_NAME)/pkg/server
+	GOOS=linux CGO_ENABLED=0 go build -o $(BIN)/tsb/template-service-broker $(PACKAGE_NAME)/pkg/server/tsb
+build-cluster-tsb:
+	GOOS=linux CGO_ENABLED=0 go build -o $(BIN)/cluster-tsb/template-service-broker	 $(PACKAGE_NAME)/pkg/server/cluster-tsb
 
-.PHONY: image image-tsb
-image: image-tsb
+.PHONY: image image-tsb image-cluster-tsb
+image: image-tsb image-cluster-tsb
 
 image-tsb:
-	docker build -f build/service-broker/Dockerfile -t $(SERVICE_BROKER_IMG) .
+	docker build -f build/service-broker/tsb/Dockerfile -t $(SERVICE_BROKER_IMG) .
+image-cluster-tsb:
+	docker build -f build/service-broker/cluster-tsb/Dockerfile -t $(CLUSTER_SERVICE_BROKER_IMG) .
 
-.PHONY: push push-tsb
-push: push-tsb
+.PHONY: push push-tsb push-cluster-tsb
+push: push-tsb push-cluster-tsb
 
 push-tsb:
 	docker push $(SERVICE_BROKER_IMG)
+push-cluster-tsb:
+	docker push $(CLUSTER_SERVICE_BROKER_IMG)
