@@ -4,4 +4,4 @@ metadata:
   name: hyperbroker4
   namespace: cluster-tsb-test
 spec:
-  url: 'http://10.109.10.163:80'
+  url: 'http://{tsb_ip}:{tsb_port}'
