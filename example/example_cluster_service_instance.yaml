@@ -1,0 +1,10 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: nginx
+  namespace: tsb-test2
+spec:
+  clusterServiceClassExternalName: nginx-template2
+  clusterServicePlanExternalName: example-plan1
+  parameters:
+    NAME: 'test'

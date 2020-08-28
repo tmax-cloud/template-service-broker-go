@@ -1,7 +1,7 @@
 package schemas
 
 type ServiceBindingRequest struct {
-	Context      map[string]string           `json:"context,omitempty"`
+	Context      Context                     `json:"context,omitempty"`
 	ServiceId    string                      `json:"service_id"`
 	PlanId       string                      `json:"plan_id"`
 	BindResource ServiceBindingResouceObject `json:"bind_resource,omitempty"`

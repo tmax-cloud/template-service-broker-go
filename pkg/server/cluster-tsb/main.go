@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	port = 8081
-
+	port                  = 8081
 	apiPathPrefix         = "/v2/"
 	serviceCatalogPrefix  = "/catalog"
 	serviceInstancePrefix = "/service_instances/{instanceId}"
@@ -29,14 +28,14 @@ func main() {
 	apiRouter := router.PathPrefix(apiPathPrefix).Subrouter()
 
 	//catalog
-	apiRouter.HandleFunc(serviceCatalogPrefix, apis.GetCatalog).Methods("GET")
+	apiRouter.HandleFunc(serviceCatalogPrefix, apis.GetClusterCatalog).Methods("GET")
 
 	//provision
-	apiRouter.HandleFunc(serviceInstancePrefix, apis.ProvisionServiceInstance).Methods("PUT")
-	apiRouter.HandleFunc(serviceInstancePrefix, apis.DeprovisionServiceInstance).Methods("DELETE")
+	apiRouter.HandleFunc(serviceInstancePrefix, apis.ClusterProvisionServiceInstance).Methods("PUT")
+	apiRouter.HandleFunc(serviceInstancePrefix, apis.ClusterDeprovisionServiceInstance).Methods("DELETE")
 
 	//binding
-	apiRouter.HandleFunc(serviceBindingPrefix, apis.BindingServiceInstance).Methods("PUT")
+	apiRouter.HandleFunc(serviceBindingPrefix, apis.ClusterBindingServiceInstance).Methods("PUT")
 	apiRouter.HandleFunc(serviceBindingPrefix, apis.UnBindingServiceInstance).Methods("DELETE")
 
 	http.Handle("/", router)

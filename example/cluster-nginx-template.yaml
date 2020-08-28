@@ -1,9 +1,8 @@
 apiVersion: tmax.io/v1
 imageUrl: example.com/example.gif
-kind: Template
+kind: ClusterTemplate
 metadata:
-  name: nginx-template
-  namespace: tsb-test
+  name: nginx-template2
 objects:
 - apiVersion: apps/v1
   kind: Deployment
