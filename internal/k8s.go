@@ -81,7 +81,7 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 		}
 	}
 
-	name := serviceInstanceId
+	name := fmt.Sprintf("%s.%s.%s", request.ServiceId, request.PlanId, serviceInstanceId)
 	log.Info(fmt.Sprintf("service instance name: %s", name))
 
 	// form template instance

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/jwkim1993/hypercloud-operator/pkg/apis"
@@ -112,8 +113,13 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 func DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	query, _ := url.ParseQuery(r.URL.RawQuery)
+
 	// extract variables
 	serviceInstanceId := mux.Vars(r)["instanceId"]
+	serviceId := query["service_id"][0]
+	planId := query["plan_id"][0]
+
 	// initialize client
 	s := scheme.Scheme
 	if err := apis.AddToScheme(s); err != nil {
@@ -150,10 +156,12 @@ func DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	name := fmt.Sprintf("%s.%s.%s", serviceId, planId, serviceInstanceId)
+
 	// get template to verify service class and plans exist
 	templateInstance, err := internal.GetTemplateInstance(c, types.NamespacedName{
 		Namespace: ns,
-		Name:      serviceInstanceId,
+		Name:      name,
 	})
 
 	if err != nil { // cannot find template or plan
@@ -197,9 +205,9 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		log.Error(err, "error occurs while decoding service instance body")
 		return
 	}
+
 	// extract variables
 	serviceInstanceId := mux.Vars(r)["instanceId"]
-	//instanceName := m.Context.InstanceName
 
 	// initialize client
 	s := scheme.Scheme
@@ -278,8 +286,12 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	query, _ := url.ParseQuery(r.URL.RawQuery)
+
 	// extract variables
 	serviceInstanceId := mux.Vars(r)["instanceId"]
+	serviceId := query["service_id"][0]
+	planId := query["plan_id"][0]
 
 	// initialize client
 	s := scheme.Scheme
@@ -305,7 +317,7 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	instanceName := serviceInstanceId
+	name := fmt.Sprintf("%s.%s.%s", serviceId, planId, serviceInstanceId)
 
 	// get templateinstance in all namespace
 	templateInstances, err := internal.GetTemplateInstanceList(c, "")
@@ -322,7 +334,7 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 
 	deleteIdx := -1
 	for idx, template := range templateInstances.Items {
-		if template.Name == instanceName {
+		if template.Name == name {
 			deleteIdx = idx
 			break
 		}

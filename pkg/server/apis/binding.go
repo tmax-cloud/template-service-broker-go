@@ -39,7 +39,7 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	//get templateinstance name & namespace
-	instanceName := vars["instance_id"]
+	instanceName := m.ServiceId + "." + m.PlanId + "." + vars["instance_id"]
 	instanceNameSpace, err := internal.Namespace()
 	if err != nil {
 		logBind.Error(err, "cannot get namespace")
@@ -190,9 +190,9 @@ func ClusterBindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	//get templateinstance name & namespace
-	instanceName := vars["instance_id"] //m.ServiceId + "." + m.PlanId + "." + vars["instance_id"]
+	instanceName := m.ServiceId + "." + m.PlanId + "." + vars["instance_id"]
 	instanceNameSpace := m.Context.Namespace
-	logBind.Info("instanceName: " + instanceName + "instanceNs " + instanceNameSpace)
+
 	if instanceNameSpace == "" {
 		logBind.Info("cannot get instanceNamespace")
 		respondError(w, http.StatusInternalServerError, &schemas.Error{
