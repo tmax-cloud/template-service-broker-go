@@ -60,7 +60,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: cluster-tsb-sa
-  namespace: cluster-tsb-test
+  namespace: cluster-tsb-ns
   apiGroup: ""
 roleRef:
   kind: ClusterRole

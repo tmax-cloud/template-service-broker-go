@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/jwkim1993/template-service-broker/internal"
-	"github.com/jwkim1993/template-service-broker/pkg/server/schemas"
+	"github.com/jitaeyun/template-service-broker/internal"
+	"github.com/jitaeyun/template-service-broker/pkg/server/schemas"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"

@@ -1,10 +1,10 @@
-module github.com/jwkim1993/template-service-broker
+module github.com/jitaeyun/template-service-broker
 
 go 1.14
 
 require (
 	github.com/gorilla/mux v1.7.2
-	github.com/jwkim1993/hypercloud-operator v0.0.0-20200827081502-028509d4b6d5
+	github.com/jitaeyun/template-operator v0.0.0-20200909075503-2da70b05eba7
 	github.com/operator-framework/operator-sdk v0.17.1
 	github.com/tidwall/gjson v1.6.0
 	k8s.io/api v0.17.4

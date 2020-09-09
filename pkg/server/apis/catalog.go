@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"strings"
 
-	tmaxv1 "github.com/jwkim1993/hypercloud-operator/pkg/apis/tmax/v1"
+	tmaxv1 "github.com/jitaeyun/template-operator/pkg/apis/tmax/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/jwkim1993/template-service-broker/internal"
-	"github.com/jwkim1993/template-service-broker/pkg/server/schemas"
+	"github.com/jitaeyun/template-service-broker/internal"
+	"github.com/jitaeyun/template-service-broker/pkg/server/schemas"
 )
 
 var logCatalog = logf.Log.WithName("Catalog")
