@@ -12,7 +12,6 @@ import (
 	"github.com/jitaeyun/template-service-broker/internal"
 	"github.com/jitaeyun/template-service-broker/pkg/server/schemas"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -88,7 +87,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update template parameters using plan
-	updatePlanParams(&template.TemplateSpec, plan)
+	updatePlanParams(&m, plan)
 
 	// create template instance
 	if _, err = internal.CreateTemplateInstance(c, template, ns, m, serviceInstanceId); err != nil {
@@ -261,7 +260,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update template parameters using plan
-	updatePlanParams(&template.TemplateSpec, plan)
+	updatePlanParams(&m, plan)
 
 	// create template instance
 	if _, err = internal.CreateTemplateInstance(c, template, ns, m, serviceInstanceId); err != nil {
@@ -393,11 +392,8 @@ func isPlanValid(templateSpec *tmaxv1.TemplateSpec, planId string, plan *tmaxv1.
 	return isValid
 }
 
-func updatePlanParams(templateSpec *tmaxv1.TemplateSpec, plan *tmaxv1.PlanSpec) {
-	planParamMap := &plan.Schemas.ServiceInstance.Create.Parameters
-	for i := range templateSpec.Parameters {
-		if val, ok := (*planParamMap)[templateSpec.Parameters[i].Name]; ok {
-			templateSpec.Parameters[i].Value = intstr.Parse(val)
-		}
+func updatePlanParams(request *schemas.ServiceInstanceProvisionRequest, plan *tmaxv1.PlanSpec) {
+	for key, val := range plan.Schemas.ServiceInstance.Create.Parameters {
+		request.Parameters[key] = val
 	}
 }

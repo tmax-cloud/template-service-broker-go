@@ -63,24 +63,6 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	template.Parameters = []tmaxv1.ParamSpec{}
 	clusterTemplate.Parameters = []tmaxv1.ParamSpec{}
 
-	switch obj.(type) {
-	case *tmaxv1.Template:
-		template = obj.(*tmaxv1.Template)
-		parameters = template.Parameters[0:]
-	case *tmaxv1.ClusterTemplate:
-		clusterTemplate = obj.(*tmaxv1.ClusterTemplate)
-		parameters = clusterTemplate.Parameters[0:]
-	}
-
-	for idx, param := range parameters {
-		// if param in plan
-		if val, ok := request.Parameters[param.Name]; ok { // if a param was given
-			parameters[idx].Value = intstr.Parse(val)
-		} else if param.Required { // if not found && the param was required
-			return nil, errors.New(fmt.Sprintf("parameter %s must be included", param.Name))
-		}
-	}
-
 	name := fmt.Sprintf("%s.%s.%s", request.ServiceId, request.PlanId, serviceInstanceId)
 	log.Info(fmt.Sprintf("service instance name: %s", name))
 
@@ -90,10 +72,26 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: tmaxv1.TemplateInstanceSpec{
-			Template:        *template,
-			ClusterTemplate: *clusterTemplate,
-		},
+	}
+
+	switch obj.(type) {
+	case *tmaxv1.Template:
+		template = obj.(*tmaxv1.Template)
+		parameters = template.Parameters[0:]
+		templateInstance.Spec.Template = *template
+	case *tmaxv1.ClusterTemplate:
+		clusterTemplate = obj.(*tmaxv1.ClusterTemplate)
+		parameters = clusterTemplate.Parameters[0:]
+		templateInstance.Spec.ClusterTemplate = *clusterTemplate
+	}
+
+	for idx, param := range parameters {
+		// if param in plan
+		if val, ok := request.Parameters[param.Name]; ok { // if a param was given
+			parameters[idx].Value = intstr.Parse(val)
+		} else if param.Required { // if not found && the param was required
+			return nil, errors.New(fmt.Sprintf("parameter %s must be included", param.Name))
+		}
 	}
 
 	// create template instance

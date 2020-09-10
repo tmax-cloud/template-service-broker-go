@@ -52,16 +52,6 @@ func GetCatalog(w http.ResponseWriter, r *http.Request) {
 	for _, template := range templateList.Items {
 		//make service
 		service := MakeService(template.Name, &template.TemplateSpec)
-
-		//if empty plan, make default plan
-		if len(template.Plans) == 0 {
-			plan := tmaxv1.PlanSpec{
-				Id:          template.Name + "-plan-default",
-				Name:        template.Name + "-plan-default",
-				Description: template.Name + "-plan-default",
-			}
-			service.Plans = append(service.Plans, plan)
-		}
 		response.Services = append(response.Services, service)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -97,16 +87,6 @@ func GetClusterCatalog(w http.ResponseWriter, r *http.Request) {
 	for _, template := range clusterTemplateList.Items {
 		//make service
 		service := MakeService(template.Name, &template.TemplateSpec)
-
-		//if empty plan, make default plan
-		if len(template.Plans) == 0 {
-			plan := tmaxv1.PlanSpec{
-				Id:          template.Name + "-plan-default",
-				Name:        template.Name + "-plan-default",
-				Description: template.Name + "-plan-default",
-			}
-			service.Plans = append(service.Plans, plan)
-		}
 		response.Services = append(response.Services, service)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -117,18 +97,19 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec) schemas
 	if templateSpec.ShortDescription == "" {
 		templateSpec.ShortDescription = templateName
 	}
+
 	if templateSpec.ImageUrl == "" {
 		templateSpec.ImageUrl = "https://folo.co.kr/img/gm_noimage.png"
 	}
+
 	if templateSpec.LongDescription == "" {
 		templateSpec.LongDescription = templateName
 	}
-	if templateSpec.UrlDescription == "" {
-		templateSpec.UrlDescription = templateName
-	}
+
 	if templateSpec.MarkDownDescription == "" {
 		templateSpec.MarkDownDescription = templateName
 	}
+
 	if templateSpec.Provider == "" {
 		templateSpec.Provider = "tmax"
 	}
