@@ -77,12 +77,16 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	switch obj.(type) {
 	case *tmaxv1.Template:
 		template = obj.(*tmaxv1.Template)
-		parameters = template.Parameters[0:]
-		templateInstance.Spec.Template = *template
+		templateInstance.Spec.Template.ObjectMeta = template.ObjectMeta
+		templateInstance.Spec.Template.Parameters = template.Parameters
+		templateInstance.Spec.Template.Objects = template.Objects
+		parameters = templateInstance.Spec.Template.Parameters[0:]
 	case *tmaxv1.ClusterTemplate:
 		clusterTemplate = obj.(*tmaxv1.ClusterTemplate)
-		parameters = clusterTemplate.Parameters[0:]
-		templateInstance.Spec.ClusterTemplate = *clusterTemplate
+		templateInstance.Spec.ClusterTemplate.ObjectMeta = clusterTemplate.ObjectMeta
+		templateInstance.Spec.ClusterTemplate.Parameters = clusterTemplate.Parameters
+		templateInstance.Spec.ClusterTemplate.Objects = clusterTemplate.Objects
+		parameters = templateInstance.Spec.ClusterTemplate.Parameters[0:]
 	}
 
 	for idx, param := range parameters {
