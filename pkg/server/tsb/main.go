@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
-	"github.com/tmax-cloud/template-service-broker/pkg/server/apis"
+	"github.com/tmax-cloud/template-service-broker-go/pkg/server/apis"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 

@@ -1,4 +1,4 @@
-module github.com/tmax-cloud/template-service-broker
+module github.com/tmax-cloud/template-service-broker-go
 
 go 1.14
 

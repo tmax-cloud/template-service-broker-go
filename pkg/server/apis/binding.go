@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/tmax-cloud/template-service-broker/internal"
-	"github.com/tmax-cloud/template-service-broker/pkg/server/schemas"
+	"github.com/tmax-cloud/template-service-broker-go/internal"
+	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"

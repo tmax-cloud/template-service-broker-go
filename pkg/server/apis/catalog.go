@@ -12,8 +12,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/tmax-cloud/template-service-broker/internal"
-	"github.com/tmax-cloud/template-service-broker/pkg/server/schemas"
+	"github.com/tmax-cloud/template-service-broker-go/internal"
+	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 )
 
 var logCatalog = logf.Log.WithName("Catalog")

@@ -3,7 +3,7 @@ SDK	= operator-sdk
 REGISTRY      ?= 172.22.11.2:30500
 VERSION       ?= 0.0.1
 
-PACKAGE_NAME  = github.com/tmax-cloud/template-service-broker
+PACKAGE_NAME  = github.com/tmax-cloud/template-service-broker-go
 
 SERVICE_BROKER_NAME  = tsb
 SERVICE_BROKER_IMG   = $(REGISTRY)/$(SERVICE_BROKER_NAME):$(VERSION)
@@ -17,7 +17,7 @@ build: build-tsb build-cluster-tsb
 build-tsb:
 	GOOS=linux CGO_ENABLED=0 go build -o $(BIN)/tsb/template-service-broker $(PACKAGE_NAME)/pkg/server/tsb
 build-cluster-tsb:
-	GOOS=linux CGO_ENABLED=0 go build -o $(BIN)/cluster-tsb/template-service-broker	 $(PACKAGE_NAME)/pkg/server/cluster-tsb
+	GOOS=linux CGO_ENABLED=0 go build -o $(BIN)/cluster-tsb/template-service-broker $(PACKAGE_NAME)/pkg/server/cluster-tsb
 
 .PHONY: image image-tsb image-cluster-tsb
 image: image-tsb image-cluster-tsb
