@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	tmaxv1 "github.com/jitaeyun/template-operator/pkg/apis/tmax/v1"
+	tmaxv1 "github.com/tmax-cloud/template-operator/pkg/apis/tmax/v1"
 )
 
 type Catalog struct {

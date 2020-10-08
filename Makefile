@@ -3,7 +3,7 @@ SDK	= operator-sdk
 REGISTRY      ?= 172.22.11.2:30500
 VERSION       ?= 0.0.1
 
-PACKAGE_NAME  = github.com/jitaeyun/template-service-broker
+PACKAGE_NAME  = github.com/tmax-cloud/template-service-broker
 
 SERVICE_BROKER_NAME  = tsb
 SERVICE_BROKER_IMG   = $(REGISTRY)/$(SERVICE_BROKER_NAME):$(VERSION)

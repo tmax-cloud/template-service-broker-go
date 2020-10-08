@@ -506,18 +506,6 @@ github.com/jackc/fake v0.0.0-20150926172116-812a484cc733/go.mod h1:WrMFNQdiFJ80s
 github.com/jackc/pgx v3.2.0+incompatible/go.mod h1:0ZGrqGqkRlliWnWB4zKnWtjbSWbGkVEFm4TeybAXq+I=
 github.com/jessevdk/go-flags v0.0.0-20180331124232-1c38ed7ad0cc/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
-github.com/jitaeyun/template-operator v0.0.0-20200909075503-2da70b05eba7 h1:zsF7i0EYmOhi9C6hcAviYU97zpB5t/DjEz92axacTz4=
-github.com/jitaeyun/template-operator v0.0.0-20200909075503-2da70b05eba7/go.mod h1:A6RXf3u1sppu4v6hokzxprOYBw/OPJe9kdwUwbO5yJ0=
-github.com/jitaeyun/template-operator v0.0.0-20200910025947-441e6d139f8c h1:9S1DASrrbnciVAp1okh8ed1Lvj48Y3mTpC0xqr6mNEw=
-github.com/jitaeyun/template-operator v0.0.0-20200910025947-441e6d139f8c/go.mod h1:A6RXf3u1sppu4v6hokzxprOYBw/OPJe9kdwUwbO5yJ0=
-github.com/jitaeyun/template-operator v0.0.0-20200910031028-8bc7a9256260 h1:ArzSzk56YH+CRuWd9FgL6HV+ygk26STrByburfL908o=
-github.com/jitaeyun/template-operator v0.0.0-20200910031028-8bc7a9256260/go.mod h1:TbSTk4u6UMj8n04cuT0wUmcxfWT0Cyk9QG+1zry22UE=
-github.com/jitaeyun/template-operator v0.0.0-20200910050737-86942d6e22f4 h1:qhqTSwIuYQxGymT3PGYPla1aNWm1DD3c18svM4iwgEA=
-github.com/jitaeyun/template-operator v0.0.0-20200910050737-86942d6e22f4/go.mod h1:TbSTk4u6UMj8n04cuT0wUmcxfWT0Cyk9QG+1zry22UE=
-github.com/jitaeyun/template-operator v0.0.0-20200910064200-a285f84f09d6 h1:ThbdiIMZD3iVrVTotDS29A8rtlZdY/uMkx+bs/5hMmg=
-github.com/jitaeyun/template-operator v0.0.0-20200910064200-a285f84f09d6/go.mod h1:TbSTk4u6UMj8n04cuT0wUmcxfWT0Cyk9QG+1zry22UE=
-github.com/jitaeyun/template-operator v0.0.0-20200910080510-df75d18b246b h1:GVBckrKUOWYm41AWVHAHI+hMgmGFGGO9HaPuEMmYQKc=
-github.com/jitaeyun/template-operator v0.0.0-20200910080510-df75d18b246b/go.mod h1:TbSTk4u6UMj8n04cuT0wUmcxfWT0Cyk9QG+1zry22UE=
 github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jmespath/go-jmespath v0.0.0-20160803190731-bd40a432e4c7/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
@@ -865,6 +853,8 @@ github.com/tidwall/match v1.0.1/go.mod h1:LujAq0jyVjBy028G1WhWfIzbpQfMO8bBZ6Tyb0
 github.com/tidwall/pretty v0.0.0-20180105212114-65a9db5fad51/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tidwall/pretty v1.0.0 h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
+github.com/tmax-cloud/template-operator v0.0.0-20201008085502-8de3411e6591 h1:GjWoOT2gPYdJcd33PvOWp3FK+tqWVQQwWrIIzddtTXY=
+github.com/tmax-cloud/template-operator v0.0.0-20201008085502-8de3411e6591/go.mod h1:Q0wpFo1CN+xM5Bf7jp/st8NsPKPbm05Fwuu73uM6kLw=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
