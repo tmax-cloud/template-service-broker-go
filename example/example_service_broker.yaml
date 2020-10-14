@@ -2,6 +2,6 @@ apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceBroker
 metadata:
   name: hyperbroker4
-  namespace: tsb-test
+  namespace: tsb-ns
 spec:
   url: 'http://{tsb_ip}:{tsb_port}'

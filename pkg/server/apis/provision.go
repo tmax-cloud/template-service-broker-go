@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/tmax-cloud/template-operator/pkg/apis"
@@ -75,7 +77,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	})
 
 	plan := &tmaxv1.PlanSpec{}
-	if err != nil || !isPlanValid(&template.TemplateSpec, m.PlanId, plan) { // cannot find template or plan
+	if err != nil || !isPlanValid(&template.TemplateSpec, m.PlanId, plan, string(template.UID)) { // cannot find template or plan
 		log.Error(err, "error occurs while getting template")
 		respondError(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
@@ -248,7 +250,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	})
 
 	plan := &tmaxv1.PlanSpec{}
-	if err != nil || !isPlanValid(&template.TemplateSpec, m.PlanId, plan) { // cannot find template or plan
+	if err != nil || !isPlanValid(&template.TemplateSpec, m.PlanId, plan, string(template.UID)) { // cannot find template or plan
 		log.Error(err, "error occurs while getting template")
 		respondError(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
@@ -379,17 +381,22 @@ func respondError(w http.ResponseWriter, statusCode int, message *schemas.Error)
 	}
 }
 
-func isPlanValid(templateSpec *tmaxv1.TemplateSpec, planId string, plan *tmaxv1.PlanSpec) bool {
-	isValid := false
-	for i := range templateSpec.Plans {
-		if templateSpec.Plans[i].Id == planId {
-			isValid = true
-			*plan = templateSpec.Plans[i]
-			break
-		}
+func isPlanValid(templateSpec *tmaxv1.TemplateSpec, planId string, plan *tmaxv1.PlanSpec, uid string) bool {
+	tokIdx := strings.LastIndex(planId, "-")
+	planUid := planId[:tokIdx]
+	planIdx := planId[tokIdx+1:]
+	if planUid != uid {
+		return false
 	}
-
-	return isValid
+	if len(templateSpec.Plans) == 0 {
+		return true
+	}
+	n, _ := strconv.Atoi(planIdx)
+	if n < len(templateSpec.Plans) {
+		*plan = templateSpec.Plans[n]
+		return true
+	}
+	return false
 }
 
 func updatePlanParams(request *schemas.ServiceInstanceProvisionRequest, plan *tmaxv1.PlanSpec) {
