@@ -51,7 +51,7 @@ func GetCatalog(w http.ResponseWriter, r *http.Request) {
 
 	for _, template := range templateList.Items {
 		//make service
-		service := MakeService(template.Name, &template.TemplateSpec)
+		service := MakeService(template.Name, &template.TemplateSpec, string(template.UID))
 		response.Services = append(response.Services, service)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -86,14 +86,14 @@ func GetClusterCatalog(w http.ResponseWriter, r *http.Request) {
 
 	for _, template := range clusterTemplateList.Items {
 		//make service
-		service := MakeService(template.Name, &template.TemplateSpec)
+		service := MakeService(template.Name, &template.TemplateSpec, string(template.UID))
 		response.Services = append(response.Services, service)
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
-func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec) schemas.Service {
+func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid string) schemas.Service {
 	if templateSpec.ShortDescription == "" {
 		templateSpec.ShortDescription = templateName
 	}
@@ -131,6 +131,20 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec) schemas
 		PlanUpdateable: false,
 		Plans:          templateSpec.Plans,
 	}
+
+	//plan setting
+	for i, _ := range service.Plans {
+		service.Plans[i].Id = uid + "-" + strconv.Itoa(i)
+	}
+	if len(service.Plans) == 0 {
+		plan := tmaxv1.PlanSpec{
+			Id:          uid + "-default",
+			Name:        uid + "-default",
+			Description: uid + "-default",
+		}
+		service.Plans = append(service.Plans, plan)
+	}
+
 	//Bindable check
 	for _, object := range templateSpec.Objects {
 		var raw map[string]interface{}
