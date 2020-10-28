@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/gorilla/mux v1.8.0
-	github.com/tmax-cloud/template-operator v0.0.0-20201028010448-d22b3674f523
+	github.com/tmax-cloud/template-operator v0.0.0-20201028043852-4b265823ae83
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6
 	k8s.io/client-go v0.18.6
