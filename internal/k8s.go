@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	tmaxv1 "github.com/tmax-cloud/template-operator/pkg/apis/tmax/v1"
+	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

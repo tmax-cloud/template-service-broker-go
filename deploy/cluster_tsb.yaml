@@ -16,7 +16,7 @@ spec:
     spec:
       serviceAccountName: cluster-tsb-sa
       containers:
-      - image: 172.22.11.2:30500/cluster-tsb:0.0.1
+      - image: 192.168.6.122:5000/cluster-tsb:0.0.1
         name: cluster-tsb
         imagePullPolicy: Always
 ---

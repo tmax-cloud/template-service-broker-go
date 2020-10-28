@@ -9,8 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/tmax-cloud/template-operator/pkg/apis"
-	tmaxv1 "github.com/tmax-cloud/template-operator/pkg/apis/tmax/v1"
+	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
 	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 	"k8s.io/apimachinery/pkg/types"
@@ -37,7 +36,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 
 	// initialize client
 	s := scheme.Scheme
-	if err := apis.AddToScheme(s); err != nil {
+	if err := tmaxv1.AddToScheme(s); err != nil {
 		log.Error(err, "cannot add Template scheme")
 		respondError(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
@@ -123,7 +122,7 @@ func DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 
 	// initialize client
 	s := scheme.Scheme
-	if err := apis.AddToScheme(s); err != nil {
+	if err := tmaxv1.AddToScheme(s); err != nil {
 		log.Error(err, "cannot add Template scheme")
 		respondError(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
@@ -212,7 +211,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 
 	// initialize client
 	s := scheme.Scheme
-	if err := apis.AddToScheme(s); err != nil {
+	if err := tmaxv1.AddToScheme(s); err != nil {
 		log.Error(err, "cannot add Template scheme")
 		respondError(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
@@ -296,7 +295,7 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 
 	// initialize client
 	s := scheme.Scheme
-	if err := apis.AddToScheme(s); err != nil {
+	if err := tmaxv1.AddToScheme(s); err != nil {
 		log.Error(err, "cannot add Template scheme")
 		respondError(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",

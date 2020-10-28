@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	tmaxv1 "github.com/tmax-cloud/template-operator/pkg/apis/tmax/v1"
+	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"

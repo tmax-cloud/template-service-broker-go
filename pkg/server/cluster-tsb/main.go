@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/apis"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const (
@@ -21,7 +21,7 @@ const (
 var log = logf.Log.WithName("TSB-main")
 
 func main() {
-	logf.SetLogger(zap.Logger())
+	logf.SetLogger(zap.Logger(true))
 	log.Info("initializing server....")
 
 	router := mux.NewRouter()

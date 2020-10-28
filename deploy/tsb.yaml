@@ -16,7 +16,7 @@ spec:
     spec:
       serviceAccountName: tsb-sa
       containers:
-      - image: 172.22.11.2:30500/tsb:0.0.1
+      - image: 192.168.6.122:5000/tsb:0.0.1
         name: tsb
         imagePullPolicy: Always
 ---

@@ -1,6 +1,6 @@
 SDK	= operator-sdk
 
-REGISTRY      ?= 172.22.11.2:30500
+REGISTRY      ?= 192.168.6.122:5000
 VERSION       ?= 0.0.1
 
 PACKAGE_NAME  = github.com/tmax-cloud/template-service-broker-go
