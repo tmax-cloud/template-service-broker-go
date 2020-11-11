@@ -399,6 +399,9 @@ func isPlanValid(templateSpec *tmaxv1.TemplateSpec, planId string, plan *tmaxv1.
 }
 
 func updatePlanParams(request *schemas.ServiceInstanceProvisionRequest, plan *tmaxv1.PlanSpec) {
+	if len(request.Parameters) == 0 {
+		request.Parameters = make(map[string]string)
+	}
 	for key, val := range plan.Schemas.ServiceInstance.Create.Parameters {
 		request.Parameters[key] = val
 	}
