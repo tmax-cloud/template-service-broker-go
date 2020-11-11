@@ -114,6 +114,7 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		templateSpec.Provider = "tmax"
 	}
 	//create service struct
+	var Plans []schemas.PlanSpec
 	service := schemas.Service{
 		Name:        templateName,
 		Id:          templateName,
@@ -129,18 +130,73 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 			"recommend":           strconv.FormatBool(templateSpec.Recommend),
 		},
 		PlanUpdateable: false,
-		Plans:          templateSpec.Plans,
+	}
+	//parameter로 plan 셋팅 모두 해놓고..
+	//template 의 plan parameter 고치고 하면서
+	properties := make(map[string]schemas.PropertiesSpec)
+	var requiredParamters []string
+	for _, parameter := range templateSpec.Parameters {
+		property := schemas.PropertiesSpec{
+			Default:     parameter.Value.String(),
+			Description: parameter.Description,
+			Type:        parameter.ValueType,
+		}
+		if parameter.Required {
+			requiredParamters = append(requiredParamters, parameter.Name)
+		}
+		properties[parameter.Name] = property
 	}
 
 	//plan setting
-	for i, _ := range service.Plans {
-		service.Plans[i].Id = uid + "-" + strconv.Itoa(i)
+	for i, templatePlan := range templateSpec.Plans {
+		param := templatePlan.Schemas.ServiceInstance.Create.Parameters
+		catalogProperties := make(map[string]schemas.PropertiesSpec)
+		for key, _ := range properties {
+			property := properties[key]
+			if paramVal, ok := param[key]; ok {
+				property.Default = paramVal
+			}
+			catalogProperties[key] = property
+		}
+		catalogPlan := schemas.PlanSpec{
+			Id:                     uid + "-" + strconv.Itoa(i),
+			Name:                   templatePlan.Name,
+			Description:            templatePlan.Description,
+			Metadata:               templatePlan.Metadata,
+			Free:                   templatePlan.Free,
+			Bindable:               templatePlan.Bindable,
+			PlanUpdateable:         templatePlan.PlanUpdateable,
+			MaximumPollingDuration: templatePlan.MaximumPollingDuration,
+			MaintenanceInfo:        templatePlan.MaintenanceInfo,
+			Schemas: schemas.Schemas{
+				ServiceInstance: schemas.ServiceInstanceSchema{
+					Create: schemas.SchemaParameters{
+						Parameters: schemas.SchemaParameterSpec{
+							Properties: catalogProperties,
+							Required:   requiredParamters,
+						},
+					},
+				},
+			},
+		}
+		Plans = append(Plans, catalogPlan)
 	}
+	service.Plans = Plans
 	if len(service.Plans) == 0 {
-		plan := tmaxv1.PlanSpec{
+		plan := schemas.PlanSpec{
 			Id:          uid + "-default",
 			Name:        uid + "-default",
 			Description: uid + "-default",
+			Schemas: schemas.Schemas{
+				ServiceInstance: schemas.ServiceInstanceSchema{
+					Create: schemas.SchemaParameters{
+						Parameters: schemas.SchemaParameterSpec{
+							Properties: properties,
+							Required:   requiredParamters,
+						},
+					},
+				},
+			},
 		}
 		service.Plans = append(service.Plans, plan)
 	}

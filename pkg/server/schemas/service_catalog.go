@@ -18,11 +18,80 @@ type Service struct {
 	Metadata        map[string]string `json:"metadata,omitempty"`
 	DashboardClient DashBoardClient   `json:"dashboard_client,omitempty`
 	PlanUpdateable  bool              `json:"plan_updateable,omitempty"`
-	Plans           []tmaxv1.PlanSpec `json:"plans`
+	Plans           []PlanSpec        `json:"plans`
 }
 
 type DashBoardClient struct {
 	Id          string `json:"id,omitempty"`
 	Secret      string `json:"secret,omitempty"`
 	RedirectUri string `json:"redirect_uri,omitempty"`
+}
+
+type PlanSpec struct {
+	Id                     string                 `json:"id,omitempty"`
+	Name                   string                 `json:"name"`
+	Description            string                 `json:"description,omitempty"`
+	Metadata               tmaxv1.PlanMetadata    `json:"metadata,omitempty"`
+	Free                   bool                   `json:"free,omitempty"`
+	Bindable               bool                   `json:"bindable,omitempty"`
+	PlanUpdateable         bool                   `json:"plan_updateable,omitempty"`
+	Schemas                Schemas                `json:"schemas,omitempty"`
+	MaximumPollingDuration int                    `json:"maximum_polling_duration,omitempty"`
+	MaintenanceInfo        tmaxv1.MaintenanceInfo `json:"maintenance_info,omitempty"`
+}
+
+type PlanMetadata struct {
+	Bullets     []string `json:"bullets,omitempty"`
+	Costs       Cost     `json:"costs,omitempty"`
+	DisplayName string   `json:"displayName,omitempty"`
+}
+
+type Cost struct {
+	Amount int    `json:"amount"`
+	Unit   string `json:"unit"`
+}
+
+type MaintenanceInfo struct {
+	Version     string `json:"version"`
+	Description string `json:"description,omitempty"`
+}
+type Schemas struct {
+	ServiceInstance ServiceInstanceSchema `json:"service_instance,omitempty"`
+	ServiceBinding  ServiceBindingSchema  `json:"service_binding,omitempty"`
+}
+
+type ServiceInstanceSchema struct {
+	Create SchemaParameters `json:"create,omitempty"`
+	Update SchemaParameters `json:"update,omitempty"`
+}
+
+type ServiceBindingSchema struct {
+	Create SchemaParameters `json:"create,omitempty"`
+}
+
+type SchemaParameters struct {
+	Parameters SchemaParameterSpec `json:"parameters,omitempty"`
+}
+
+type SchemaParameterSpec struct {
+	Properties map[string]PropertiesSpec `json:"properties,omitempty"`
+	Required   []string                  `json:"required,omitempty"`
+}
+
+type PropertiesSpec struct {
+	Default     string `json:"default,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	Type        string `json:"type,omitempty"`
+}
+
+type ParamSpec struct {
+	Description string `json:"description,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
+	From        string `json:"from,omitempty"`
+	Generate    string `json:"generate,omitempty"`
+	Name        string `json:"name"`
+	Required    bool   `json:"required,omitempty"`
+	Value       string `json:"value,omitempty"`
+	ValueType   string `json:"valueType,omitempty"`
 }
