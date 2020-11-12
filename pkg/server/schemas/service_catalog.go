@@ -1,9 +1,5 @@
 package schemas
 
-import (
-	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
-)
-
 type Catalog struct {
 	Services []Service `json:"services`
 }
@@ -28,16 +24,16 @@ type DashBoardClient struct {
 }
 
 type PlanSpec struct {
-	Id                     string                 `json:"id,omitempty"`
-	Name                   string                 `json:"name"`
-	Description            string                 `json:"description,omitempty"`
-	Metadata               tmaxv1.PlanMetadata    `json:"metadata,omitempty"`
-	Free                   bool                   `json:"free,omitempty"`
-	Bindable               bool                   `json:"bindable,omitempty"`
-	PlanUpdateable         bool                   `json:"plan_updateable,omitempty"`
-	Schemas                Schemas                `json:"schemas,omitempty"`
-	MaximumPollingDuration int                    `json:"maximum_polling_duration,omitempty"`
-	MaintenanceInfo        tmaxv1.MaintenanceInfo `json:"maintenance_info,omitempty"`
+	Id                     string          `json:"id,omitempty"`
+	Name                   string          `json:"name"`
+	Description            string          `json:"description,omitempty"`
+	Metadata               PlanMetadata    `json:"metadata,omitempty"`
+	Free                   bool            `json:"free,omitempty"`
+	Bindable               bool            `json:"bindable,omitempty"`
+	PlanUpdateable         bool            `json:"plan_updateable,omitempty"`
+	Schemas                Schemas         `json:"schemas,omitempty"`
+	MaximumPollingDuration int             `json:"maximum_polling_duration,omitempty"`
+	MaintenanceInfo        MaintenanceInfo `json:"maintenance_info,omitempty"`
 }
 
 type PlanMetadata struct {
@@ -80,6 +76,7 @@ type SchemaParameterSpec struct {
 
 type PropertiesSpec struct {
 	Default     string `json:"default,omitempty"`
+	Fixed       bool   `json:"fixed,omitempty"`
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
 	Type        string `json:"type,omitempty"`

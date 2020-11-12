@@ -114,7 +114,6 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		templateSpec.Provider = "tmax"
 	}
 	//create service struct
-	var Plans []schemas.PlanSpec
 	service := schemas.Service{
 		Name:        templateName,
 		Id:          templateName,
@@ -131,8 +130,8 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		},
 		PlanUpdateable: false,
 	}
-	//parameter로 plan 셋팅 모두 해놓고..
-	//template 의 plan parameter 고치고 하면서
+
+	//default parameter setting
 	properties := make(map[string]schemas.PropertiesSpec)
 	var requiredParamters []string
 	for _, parameter := range templateSpec.Parameters {
@@ -147,27 +146,41 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		properties[parameter.Name] = property
 	}
 
-	//plan setting
+	//plan parameter setting & plan setting
+	var Plans []schemas.PlanSpec
 	for i, templatePlan := range templateSpec.Plans {
-		param := templatePlan.Schemas.ServiceInstance.Create.Parameters
+		planParameters := templatePlan.Schemas.ServiceInstance.Create.Parameters
 		catalogProperties := make(map[string]schemas.PropertiesSpec)
 		for key, _ := range properties {
 			property := properties[key]
-			if paramVal, ok := param[key]; ok {
+			if paramVal, ok := planParameters[key]; ok {
 				property.Default = paramVal
+				property.Fixed = true
+			} else {
+				property.Fixed = false
 			}
 			catalogProperties[key] = property
 		}
-		catalogPlan := schemas.PlanSpec{
-			Id:                     uid + "-" + strconv.Itoa(i),
-			Name:                   templatePlan.Name,
-			Description:            templatePlan.Description,
-			Metadata:               templatePlan.Metadata,
+		plan := schemas.PlanSpec{
+			Id:          uid + "-" + strconv.Itoa(i),
+			Name:        templatePlan.Name,
+			Description: templatePlan.Description,
+			Metadata: schemas.PlanMetadata{
+				Bullets: templatePlan.Metadata.Bullets,
+				Costs: schemas.Cost{
+					Amount: templatePlan.Metadata.Costs.Amount,
+					Unit:   templatePlan.Metadata.Costs.Unit,
+				},
+				DisplayName: templatePlan.Metadata.DisplayName,
+			},
 			Free:                   templatePlan.Free,
 			Bindable:               templatePlan.Bindable,
 			PlanUpdateable:         templatePlan.PlanUpdateable,
 			MaximumPollingDuration: templatePlan.MaximumPollingDuration,
-			MaintenanceInfo:        templatePlan.MaintenanceInfo,
+			MaintenanceInfo: schemas.MaintenanceInfo{
+				Version:     templatePlan.MaintenanceInfo.Version,
+				Description: templatePlan.MaintenanceInfo.Description,
+			},
 			Schemas: schemas.Schemas{
 				ServiceInstance: schemas.ServiceInstanceSchema{
 					Create: schemas.SchemaParameters{
@@ -179,9 +192,11 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 				},
 			},
 		}
-		Plans = append(Plans, catalogPlan)
+		Plans = append(Plans, plan)
 	}
 	service.Plans = Plans
+
+	//default plan setting in case of no plan
 	if len(service.Plans) == 0 {
 		plan := schemas.PlanSpec{
 			Id:          uid + "-default",
