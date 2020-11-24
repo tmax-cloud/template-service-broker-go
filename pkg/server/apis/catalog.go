@@ -130,6 +130,9 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		},
 		PlanUpdateable: false,
 	}
+	if len(service.Description) == 0 {
+		service.Description = templateName
+	}
 
 	//default parameter setting
 	properties := make(map[string]schemas.PropertiesSpec)
@@ -191,6 +194,12 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 					},
 				},
 			},
+		}
+		if len(plan.Name) == 0 {
+			plan.Name = templateName + "-" + "plan" + "-" + strconv.Itoa(i)
+		}
+		if len(plan.Description) == 0 {
+			plan.Description = templateName + "-" + "plan" + "-" + strconv.Itoa(i)
 		}
 		Plans = append(Plans, plan)
 	}
