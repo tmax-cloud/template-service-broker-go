@@ -101,7 +101,6 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 	if templateSpec.ImageUrl == "" {
 		templateSpec.ImageUrl = "https://folo.co.kr/img/gm_noimage.png"
 	}
-
 	if templateSpec.LongDescription == "" {
 		templateSpec.LongDescription = templateName
 	}
@@ -130,10 +129,6 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		},
 		PlanUpdateable: false,
 	}
-	if len(service.Description) == 0 {
-		service.Description = templateName
-	}
-
 	//default parameter setting
 	properties := make(map[string]schemas.PropertiesSpec)
 	var requiredParamters []string
