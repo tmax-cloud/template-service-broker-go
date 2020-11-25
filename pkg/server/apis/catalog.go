@@ -101,7 +101,6 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 	if templateSpec.ImageUrl == "" {
 		templateSpec.ImageUrl = "https://folo.co.kr/img/gm_noimage.png"
 	}
-
 	if templateSpec.LongDescription == "" {
 		templateSpec.LongDescription = templateName
 	}
@@ -129,18 +128,94 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 			"recommend":           strconv.FormatBool(templateSpec.Recommend),
 		},
 		PlanUpdateable: false,
-		Plans:          templateSpec.Plans,
+	}
+	//default parameter setting
+	properties := make(map[string]schemas.PropertiesSpec)
+	var requiredParamters []string
+	for _, parameter := range templateSpec.Parameters {
+		property := schemas.PropertiesSpec{
+			Default:     parameter.Value.String(),
+			Description: parameter.Description,
+			Type:        parameter.ValueType,
+		}
+		if parameter.Required {
+			requiredParamters = append(requiredParamters, parameter.Name)
+		}
+		properties[parameter.Name] = property
 	}
 
-	//plan setting
-	for i, _ := range service.Plans {
-		service.Plans[i].Id = uid + "-" + strconv.Itoa(i)
+	//plan parameter setting & plan setting
+	var Plans []schemas.PlanSpec
+	for i, templatePlan := range templateSpec.Plans {
+		planParameters := templatePlan.Schemas.ServiceInstance.Create.Parameters
+		catalogProperties := make(map[string]schemas.PropertiesSpec)
+		for key, _ := range properties {
+			property := properties[key]
+			if paramVal, ok := planParameters[key]; ok {
+				property.Default = paramVal
+				property.Fixed = true
+			} else {
+				property.Fixed = false
+			}
+			catalogProperties[key] = property
+		}
+		plan := schemas.PlanSpec{
+			Id:          uid + "-" + strconv.Itoa(i),
+			Name:        templatePlan.Name,
+			Description: templatePlan.Description,
+			Metadata: schemas.PlanMetadata{
+				Bullets: templatePlan.Metadata.Bullets,
+				Costs: schemas.Cost{
+					Amount: templatePlan.Metadata.Costs.Amount,
+					Unit:   templatePlan.Metadata.Costs.Unit,
+				},
+				DisplayName: templatePlan.Metadata.DisplayName,
+			},
+			Free:                   templatePlan.Free,
+			Bindable:               templatePlan.Bindable,
+			PlanUpdateable:         templatePlan.PlanUpdateable,
+			MaximumPollingDuration: templatePlan.MaximumPollingDuration,
+			MaintenanceInfo: schemas.MaintenanceInfo{
+				Version:     templatePlan.MaintenanceInfo.Version,
+				Description: templatePlan.MaintenanceInfo.Description,
+			},
+			Schemas: schemas.Schemas{
+				ServiceInstance: schemas.ServiceInstanceSchema{
+					Create: schemas.SchemaParameters{
+						Parameters: schemas.SchemaParameterSpec{
+							Properties: catalogProperties,
+							Required:   requiredParamters,
+						},
+					},
+				},
+			},
+		}
+		if len(plan.Name) == 0 {
+			plan.Name = templateName + "-" + "plan" + "-" + strconv.Itoa(i)
+		}
+		if len(plan.Description) == 0 {
+			plan.Description = templateName + "-" + "plan" + "-" + strconv.Itoa(i)
+		}
+		Plans = append(Plans, plan)
 	}
+	service.Plans = Plans
+
+	//default plan setting in case of no plan
 	if len(service.Plans) == 0 {
-		plan := tmaxv1.PlanSpec{
+		plan := schemas.PlanSpec{
 			Id:          uid + "-default",
 			Name:        uid + "-default",
 			Description: uid + "-default",
+			Schemas: schemas.Schemas{
+				ServiceInstance: schemas.ServiceInstanceSchema{
+					Create: schemas.SchemaParameters{
+						Parameters: schemas.SchemaParameterSpec{
+							Properties: properties,
+							Required:   requiredParamters,
+						},
+					},
+				},
+			},
 		}
 		service.Plans = append(service.Plans, plan)
 	}
