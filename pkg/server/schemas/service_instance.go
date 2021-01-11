@@ -1,12 +1,14 @@
 package schemas
 
+import "k8s.io/apimachinery/pkg/util/intstr"
+
 type ServiceInstanceProvisionRequest struct {
-	ServiceId        string            `json:"service_id"`
-	PlanId           string            `json:"plan_id"`
-	Context          Context           `json:"context,omitempty"`
-	OrganizationGuid string            `json:"organization_guid"`
-	SpaceGuid        string            `json:"space_guid"`
-	Parameters       map[string]string `json:"parameters,omitempty"`
+	ServiceId        string                        `json:"service_id"`
+	PlanId           string                        `json:"plan_id"`
+	Context          Context                       `json:"context,omitempty"`
+	OrganizationGuid string                        `json:"organization_guid"`
+	SpaceGuid        string                        `json:"space_guid"`
+	Parameters       map[string]intstr.IntOrString `json:"parameters,omitempty"`
 }
 
 type ServiceInstanceProvisionResponse struct {

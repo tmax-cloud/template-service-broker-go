@@ -13,6 +13,7 @@ import (
 	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -381,9 +382,13 @@ func respondError(w http.ResponseWriter, statusCode int, message *schemas.Error)
 }
 
 func isPlanValid(templateSpec *tmaxv1.TemplateSpec, planId string, plan *tmaxv1.PlanSpec, uid string) bool {
+	if strings.LastIndex(planId, "default") != -1 {
+		return true
+	}
 	tokIdx := strings.LastIndex(planId, "-")
 	planUid := planId[:tokIdx]
 	planIdx := planId[tokIdx+1:]
+	log.Info("planId/uid: " + planId + " " + uid)
 	if planUid != uid {
 		return false
 	}
@@ -400,7 +405,7 @@ func isPlanValid(templateSpec *tmaxv1.TemplateSpec, planId string, plan *tmaxv1.
 
 func updatePlanParams(request *schemas.ServiceInstanceProvisionRequest, plan *tmaxv1.PlanSpec) {
 	if len(request.Parameters) == 0 {
-		request.Parameters = make(map[string]string)
+		request.Parameters = make(map[string]intstr.IntOrString)
 	}
 	for key, val := range plan.Schemas.ServiceInstance.Create.Parameters {
 		request.Parameters[key] = val

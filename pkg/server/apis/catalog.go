@@ -134,7 +134,7 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 	var requiredParamters []string
 	for _, parameter := range templateSpec.Parameters {
 		property := schemas.PropertiesSpec{
-			Default:     parameter.Value.String(),
+			Default:     parameter.Value,
 			Description: parameter.Description,
 			Type:        parameter.ValueType,
 		}
@@ -205,7 +205,7 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		plan := schemas.PlanSpec{
 			Id:          uid + "-plan-default",
 			Name:        templateName + "-plan-default",
-			Description: uid + "-plan-default",
+			Description: templateName + "-plan-default",
 			Schemas: schemas.Schemas{
 				ServiceInstance: schemas.ServiceInstanceSchema{
 					Create: schemas.SchemaParameters{

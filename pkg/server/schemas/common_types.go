@@ -1,7 +1,7 @@
 package schemas
 
 type Context struct {
-	ClusterId    string `json:"cluster_id"`
+	ClusterId    string `json:"clusterid"`
 	InstanceName string `json:"instance_name"`
 	Namespace    string `json:"namespace"`
 	Platform     string `json:"platform"`

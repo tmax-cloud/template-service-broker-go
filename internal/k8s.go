@@ -12,7 +12,6 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -92,7 +91,7 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	for idx, param := range parameters {
 		// if param in plan
 		if val, ok := request.Parameters[param.Name]; ok { // if a param was given
-			parameters[idx].Value = intstr.Parse(val)
+			parameters[idx].Value = val
 		} else if param.Required { // if not found && the param was required
 			return nil, errors.New(fmt.Sprintf("parameter %s must be included", param.Name))
 		}

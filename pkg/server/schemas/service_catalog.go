@@ -1,5 +1,7 @@
 package schemas
 
+import "k8s.io/apimachinery/pkg/util/intstr"
+
 type Catalog struct {
 	Services []Service `json:"services`
 }
@@ -75,11 +77,11 @@ type SchemaParameterSpec struct {
 }
 
 type PropertiesSpec struct {
-	Default     string `json:"default,omitempty"`
-	Fixed       bool   `json:"fixed,omitempty"`
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
-	Type        string `json:"type,omitempty"`
+	Default     intstr.IntOrString `json:"default,omitempty"`
+	Fixed       bool               `json:"fixed,omitempty"`
+	Title       string             `json:"title,omitempty"`
+	Description string             `json:"description,omitempty"`
+	Type        string             `json:"type,omitempty"`
 }
 
 type ParamSpec struct {
