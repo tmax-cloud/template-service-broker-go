@@ -203,9 +203,9 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 	//default plan setting in case of no plan
 	if len(service.Plans) == 0 {
 		plan := schemas.PlanSpec{
-			Id:          uid + "-default",
-			Name:        uid + "-default",
-			Description: uid + "-default",
+			Id:          uid + "-plan-default",
+			Name:        templateName + "-plan-default",
+			Description: uid + "-plan-default",
 			Schemas: schemas.Schemas{
 				ServiceInstance: schemas.ServiceInstanceSchema{
 					Create: schemas.SchemaParameters{
