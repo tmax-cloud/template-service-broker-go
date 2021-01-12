@@ -382,18 +382,15 @@ func respondError(w http.ResponseWriter, statusCode int, message *schemas.Error)
 }
 
 func isPlanValid(templateSpec *tmaxv1.TemplateSpec, planId string, plan *tmaxv1.PlanSpec, uid string) bool {
-	if strings.LastIndex(planId, "default") != -1 {
-		return true
-	}
+
 	tokIdx := strings.LastIndex(planId, "-")
 	planUid := planId[:tokIdx]
 	planIdx := planId[tokIdx+1:]
-	log.Info("planId/uid: " + planId + " " + uid)
-	if planUid != uid {
-		return false
-	}
 	if len(templateSpec.Plans) == 0 {
 		return true
+	}
+	if planUid != uid {
+		return false
 	}
 	n, _ := strconv.Atoi(planIdx)
 	if n < len(templateSpec.Plans) {
