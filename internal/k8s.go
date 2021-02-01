@@ -65,11 +65,14 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	name := fmt.Sprintf("%s.%s.%s", request.ServiceId, request.PlanId, serviceInstanceId)
 	log.Info(fmt.Sprintf("service instance name: %s", name))
 
+	labels := make(map[string]string)
+	labels["serviceInstanceRef"] = request.Context.InstanceName
 	// form template instance
 	templateInstance := &tmaxv1.TemplateInstance{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
+			Labels:    labels,
 		},
 	}
 
