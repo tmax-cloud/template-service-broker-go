@@ -1,0 +1,86 @@
+apiVersion: tmax.io/v1
+kind: ClusterTemplate
+metadata:
+  name: nexus-package-server
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+imageUrl: https://avatars0.githubusercontent.com/u/44938?s=200&v=4
+provider: tmax
+recommend: false
+shortDescription: Nexus package server for Java Maven
+longDescription: Nexus package server for Java Maven
+urlDescription: https://www.sonatype.com/product-nexus-repository
+tags:
+- nexus
+- package-server
+- java
+- maven
+parameters:
+- name: DEPLOY_NAME
+  displayName: DeploymentName
+  description: Deployment name
+  required: true
+- name: STORAGE
+  displayName: StorageSize
+  description: Size of a storage (e.g., 100Mi, 10Gi, ...)
+  required: true
+plans:
+- bindable: false
+  description: Nexus package server
+  name: nexus-plan0
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${DEPLOY_NAME}-svc
+    labels:
+      app: ${DEPLOY_NAME}
+  spec:
+    selector:
+      app: ${DEPLOY_NAME}
+    ports:
+    - name: http
+      port: 8081
+      protocol: TCP
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${DEPLOY_NAME}-pvc
+    labels:
+      app: ${DEPLOY_NAME}
+  spec:
+    storageClassName: csi-cephfs-sc
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${STORAGE}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: ${DEPLOY_NAME}
+    labels:
+      app: ${DEPLOY_NAME}
+  spec:
+    selector:
+      matchLabels:
+        app: ${DEPLOY_NAME}
+    template:
+      metadata:
+        labels:
+          app: ${DEPLOY_NAME}
+      spec:
+        containers:
+        - name: nexus
+          image: sonatype/nexus3
+          ports:
+          - containerPort: 8081
+          volumeMounts:
+          - name: nexus-data
+            mountPath: /nexus-data
+        volumes:
+        - name: nexus-data
+          persistentVolumeClaim:
+            claimName: ${DEPLOY_NAME}-pvc
+

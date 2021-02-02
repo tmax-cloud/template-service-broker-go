@@ -1,0 +1,11 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: nexus-package-server-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: nexus-package-server
+  clusterServicePlanExternalName: nexus-plan0
+  parameters:
+    DEPLOY_NAME: nexus-private-1
+    STORAGE: 10Gi

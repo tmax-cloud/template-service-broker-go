@@ -1,0 +1,90 @@
+apiVersion: tmax.io/v1
+kind: ClusterTemplate
+metadata:
+  name: verdaccio-package-server
+  namespace: default
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+imageUrl: https://verdaccio.org/img/logo/banner/png/verdaccio-banner@2x.png
+provider: tmax
+recommend: false
+shortDescription: Verdaccio package server for Node.js NPM
+longDescription: Verdaccio package server for Node.js NPM
+urlDescription: https://verdaccio.org/
+tags:
+- verdaccio
+- package-server
+- nodejs
+- npm
+parameters:
+- name: DEPLOY_NAME
+  displayName: DeploymentName
+  description: Deployment name
+  required: true
+- name: STORAGE
+  displayName: StorageSize
+  description: Size of a storage (e.g., 100Mi, 10Gi, ...)
+  required: true
+plans:
+- bindable: false
+  description: Verdaccio package server
+  name: verdaccio-plan0
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${DEPLOY_NAME}-svc
+    labels:
+      app: ${DEPLOY_NAME}
+  spec:
+    selector:
+      app: ${DEPLOY_NAME}
+    ports:
+    - name: http
+      port: 4873
+      protocol: TCP
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${DEPLOY_NAME}-pvc
+    labels:
+      app: ${DEPLOY_NAME}
+  spec:
+    storageClassName: csi-cephfs-sc
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${STORAGE}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: ${DEPLOY_NAME}
+    labels:
+      app: ${DEPLOY_NAME}
+  spec:
+    selector:
+      matchLabels:
+        app: ${DEPLOY_NAME}
+    template:
+      metadata:
+        labels:
+          app: ${DEPLOY_NAME}
+      spec:
+        containers:
+        - name: verdaccio
+          image: verdaccio/verdaccio
+          ports:
+          - containerPort: 4873
+          env:
+          - name: VERDACCIO_PORT
+            value: '4873'
+          volumeMounts:
+          - name: verdaccio-data
+            mountPath: /verdaccio/storage
+        volumes:
+        - name: verdaccio-data
+          persistentVolumeClaim:
+            claimName: ${DEPLOY_NAME}-pvc
+

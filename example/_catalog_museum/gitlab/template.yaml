@@ -1,0 +1,354 @@
+apiVersion: tmax.io/v1
+kind: ClusterTemplate
+metadata:
+  name: gitlab-template
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+shortDescription: "GitLab Deployment"
+longDescription: "GitLab Deployment"
+urlDescription: https://about.gitlab.com/
+imageUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c6/GitLab_logo.png"
+provider: tmax
+tags:
+- gitlab
+- git
+- scm
+parameters:
+- name: APP_NAME
+  displayName: AppName
+  description: A GitLab Deployment Name
+  required: true
+- name: STORAGE
+  displayName: Storage
+  description: Storage size
+  required: true
+- name: SERVICE_TYPE
+  displayName: ServiceType
+  description: Service Type (ClsuterIP/NodePort/LoadBalancer/Ingress)
+  required: true
+- name: WEB_NODE_IP
+  displayName: WebNodeIP
+  description: (Only for NodePort type) Web NodeIP
+  required: false
+  value: ''
+- name: WEB_NODE_PORT
+  displayName: WebNodePort
+  description: (Only for NodePort type) Web NodePort
+  required: false
+  value: 80
+  valueType: number
+- name: INGRESS_HOST
+  displayName: IngressHost
+  description: (Only for Ingress type) Ingress hostname
+  required: false
+- name: SSH_PORT
+  displayName: SshPort
+  description: SSH port for git clone/pull/push
+  required: true
+  value: 2221
+  valueType: number
+- name: RESOURCE_CPU
+  displayName: ResourceCPU
+  description: Resource request, CPU (e.g., 1)
+  required: true
+- name: RESOURCE_MEM
+  displayName: ResourceMem
+  description: Resource request, Mem (e.g., 1Gi)
+  required: true
+- name: KEYCLOAK_URL
+  displayName: Keycloak URL
+  description: Keycloak URL (including protocol)
+  value: ''
+  required: false
+- name: KEYCLOAK_CLIENT
+  displayName: Keycloak Client
+  description: keycloak client name
+  value: ''
+  required: false
+- name: KEYCLOAK_SECRET
+  displayName: Keycloak Secret
+  description: Keycloak client secret
+  value: ''
+  required: false
+objects:
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: ${APP_NAME}-account
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: ${APP_NAME}-role
+  rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    resourceNames: ["${APP_NAME}-service"]
+    verbs: ["get", "list", "create", "patch", "update"]
+  - apiGroups: ["networkings", "extensions"]
+    resources: ["ingresses"]
+    resourceNames: ["${APP_NAME}-ingress"]
+    verbs: ["get", "list", "create", "patch", "update", "delete"]
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: ${APP_NAME}-binding
+  subjects:
+  - kind: ServiceAccount
+    name: ${APP_NAME}-account
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: ${APP_NAME}-role
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${APP_NAME}-service
+    labels:
+      app: ${APP_NAME}
+  spec:
+    type: ClusterIP
+    ports:
+    - name: http
+      port: 80
+    - name: https
+      port: 443
+    - name: ssh
+      port: ${SSH_PORT}
+      targetPort: 22
+    selector:
+      app: ${APP_NAME}
+- apiVersion: networking.k8s.io/v1beta1
+  kind: Ingress
+  metadata:
+    name: ${APP_NAME}-ingress
+    annotations:
+      kubernetes.io/ingress.class: nginx-shd
+  spec:
+    rules:
+    - host: waiting.ip
+      http:
+        paths:
+        - backend:
+            serviceName: ${APP_NAME}-service
+            servicePort: ${WEB_NODE_PORT}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${APP_NAME}-pvc
+    labels:
+      app: ${APP_NAME}
+  spec:
+    storageClassName: csi-cephfs-sc
+    accessModes:
+    - ReadWriteMany
+    resources:
+      requests:
+        storage: ${STORAGE}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: ${APP_NAME}
+    labels:
+      app: ${APP_NAME}
+  spec:
+    selector:
+      matchLabels:
+        app: ${APP_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: ${APP_NAME}
+      spec:
+        serviceAccountName: ${APP_NAME}-account
+        initContainers:
+        - name: parse-svc
+          image: bitnami/kubectl
+          env:
+          - name: NODE_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          volumeMounts:
+          - name: shared
+            mountPath: /tmp/shared
+          resources:
+            limits:
+              cpu: ${RESOURCE_CPU}
+              memory: ${RESOURCE_MEM}
+            requests:
+              cpu: ${RESOURCE_CPU}
+              memory: ${RESOURCE_MEM}
+          command:
+          - /bin/bash
+          - -c
+          - -x
+          - |
+            SVC_TYPE="${SERVICE_TYPE}"
+            PORT="${WEB_NODE_PORT}"
+            PORT_SSH="${SSH_PORT}"
+
+            # Remove fractions
+            PORT="${PORT/\.[0-9]*/}"
+            PORT_SSH="${PORT_SSH/\.[0-9]*/}"
+
+            # Configure Service
+            if [[ "$SVC_TYPE" == "NodePort" ]]; then
+                if [[ "$PORT" == "80" ]]; then
+                  kubectl patch service ${APP_NAME}-service --type=json -p '[{"op": "replace", "path": "/spec/type", "value": "NodePort"}]'
+                  PORT=$(kubectl get service ${APP_NAME}-service -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
+                fi
+                kubectl patch service ${APP_NAME}-service --type=json -p '[{"op": "replace", "path": "/spec/type", "value": "NodePort"}, {"op": "replace", "path": "/spec/ports/0/nodePort", "value": '$PORT'}, {"op": "replace", "path": "/spec/ports/0/port", "value": '$PORT'}, {"op": "replace", "path": "/spec/ports/0/targetPort", "value": '$PORT'}]'
+            elif [[ "$SVC_TYPE" == "LoadBalancer" ]]; then
+                kubectl patch service ${APP_NAME}-service --type=json -p '[{"op": "replace", "path": "/spec/type", "value": "LoadBalancer"}]'
+            fi
+
+            # Delete Ingress if SVC_TYPE is not Ingress
+            if [[ "$SVC_TYPE" != "Ingress" ]]; then
+                kubectl delete ingress ${APP_NAME}-ingress
+            fi
+
+            # Get external ip and port
+            if [[ "$SVC_TYPE" == "ClusterIP" ]]; then
+                EXTERNAL_IP="http://$(kubectl get service ${APP_NAME}-service -o jsonpath='{.spec.clusterIP}')/"
+            elif  [[ "$SVC_TYPE" == "NodePort" ]]; then
+                if [[ "${WEB_NODE_IP}" != "" ]]; then
+                    NODE_IP="${WEB_NODE_IP}"
+                fi
+                PORT=$(kubectl get service ${APP_NAME}-service -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
+                EXTERNAL_IP="http://$NODE_IP:$PORT/"
+            elif  [[ "$SVC_TYPE" == "LoadBalancer" ]]; then
+                IP=""
+                while [ "$IP" == "" ]; do
+                  IP=$(kubectl get service ${APP_NAME}-service -o jsonpath='{.status.loadBalancer.ingress[].ip}')
+                  sleep 1
+                done
+                EXTERNAL_IP="http://$IP/"
+            elif  [[ "$SVC_TYPE" == "Ingress" ]]; then
+                if [[ "${INGRESS_HOST}" == "" ]]; then
+                    NOW_IP=""
+                    while [ "$NOW_IP" == "" ]; do
+                        NOW_IP=$(kubectl get ingress ${APP_NAME}-ingress -o jsonpath='{.status.loadBalancer.ingress[].ip}')
+                    done
+                    ING_HOST="${APP_NAME}.$NAMESPACE.${NOW_IP}.nip.io"
+                    EXTERNAL_IP="http://$ING_HOST/"
+                else
+                    ING_HOST="${INGRESS_HOST}"
+                    EXTERNAL_IP="http://${INGRESS_HOST}/"
+                fi
+                kubectl patch ingress ${APP_NAME}-ingress --type=json -p '[{"op": "replace", "path": "/spec/rules/0/host", "value": "'$ING_HOST'"}]'
+            else
+                echo "Something's wrong"
+            fi
+
+            cat <<EOT >> /tmp/shared/omnibus.env
+            external_url '$EXTERNAL_IP'
+            gitlab_rails['gitlab_shell_ssh_port'] = $PORT_SSH
+            prometheus['enable'] = false
+            prometheus['monitor_kubernetes'] = false
+            unicorn['worker_processes'] = 4
+            grafana['enable'] = false
+            EOT
+
+            # Add keycloak
+            if [[ "${KEYCLOAK_URL}" != "" ]]; then
+              cat <<EOY >> /tmp/shared/omnibus.env
+            gitlab_rails['omniauth_enabled'] = true
+            gitlab_rails['omniauth_allow_single_sign_on'] = ['oauth2_generic']
+            gitlab_rails['omniauth_block_auto_created_users'] = false
+            gitlab_rails['omniauth_providers'] = [
+            {
+                    'name' => 'oauth2_generic',
+                    'issuer' => '${KEYCLOAK_URL}',
+                    'app_id' => '${KEYCLOAK_CLIENT}',
+                    'app_secret' => '${KEYCLOAK_SECRET}',
+                    'discovery' => true,
+                    'args' => {
+                    client_options: {
+                            'site' => '${KEYCLOAK_URL}',
+                            'user_info_url' => '/auth/realms/tmax/protocol/openid-connect/userinfo',
+                            'authorize_url' => '/auth/realms/tmax/protocol/openid-connect/auth',
+                            'token_url' => '/auth/realms/tmax/protocol/openid-connect/token',
+                            'redirect_uri' => '$EXTERNAL_IP/users/auth/oauth2_generic/callback',
+                    },
+                    user_response_structure: {
+                    attributes: { email:'email', first_name:'given_name', last_name:'family_name', name:'name', nickname:'preferred_username' },
+                    id_path: 'preferred_username'
+                    },
+                    }
+            }
+            ]
+            EOY
+            fi
+        containers:
+        - name: ${APP_NAME}
+          image: gitlab/gitlab-ce:12.9.2-ce.0
+          command:
+          - /bin/sh
+          - -c
+          - -x
+          - |
+            export GITLAB_OMNIBUS_CONFIG="$(cat /tmp/shared/omnibus.env)"
+            /assets/wrapper
+          ports:
+          - name: http
+            containerPort: ${WEB_NODE_PORT}
+          - name: https
+            containerPort: 443
+          - name: ssh
+            containerPort: 22
+          volumeMounts:
+          - name: ${APP_NAME}-pv
+            mountPath: /etc/gitlab
+            subPath: config
+          - name: ${APP_NAME}-pv
+            mountPath: /var/opt/gitlab
+            subPath: data
+          - name: shared
+            mountPath: /tmp/shared
+          resources:
+            limits:
+              cpu: ${RESOURCE_CPU}
+              memory: ${RESOURCE_MEM}
+            requests:
+              cpu: ${RESOURCE_CPU}
+              memory: ${RESOURCE_MEM}
+          readinessProbe:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - |
+                /opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10
+            periodSeconds: 150
+        volumes:
+        - name: ${APP_NAME}-pv
+          persistentVolumeClaim:
+            claimName: ${APP_NAME}-pvc
+        - name: shared
+          emptyDir: {}
+plans:
+- name: gitlab-plan1
+  description: "GitLab Plan"
+  metadata:
+    bullets:
+    - "GitLab Deployment Plan"
+    costs:
+      amount: 100
+      unit: $
+  free: false
+  bindable: true
+  plan_updateable: false
+  schemas:
+    service_instance:
+      create:
+        parameters:
+          APP_NAME: gitlab-deploy
+          STORAGE: 10Gi
+

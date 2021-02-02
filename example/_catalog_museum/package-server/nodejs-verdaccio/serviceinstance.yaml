@@ -1,0 +1,11 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: verdaccio-package-server-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: verdaccio-package-server
+  clusterServicePlanExternalName: verdaccio-plan0
+  parameters:
+    DEPLOY_NAME: verdaccio-private-1
+    STORAGE: 10Gi

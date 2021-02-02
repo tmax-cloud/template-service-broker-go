@@ -1,0 +1,11 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: mysql-ha-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: mysql-ha-template
+  clusterServicePlanExternalName: mysql-ha-plan1
+  parameters:
+    APP_NAME: mysql-ha-test-deploy
+    REPLICA: 4

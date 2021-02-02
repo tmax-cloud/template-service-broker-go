@@ -1,0 +1,11 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: devpi-package-server-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: devpi-package-server
+  clusterServicePlanExternalName: devpi-plan0
+  parameters:
+    DEPLOY_NAME: devpi-private-1
+    STORAGE: 10Gi

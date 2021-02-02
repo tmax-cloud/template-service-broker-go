@@ -1,0 +1,11 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: archiva-package-server-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: archiva-package-server
+  clusterServicePlanExternalName: archiva-plan0
+  parameters:
+    DEPLOY_NAME: archiva-private-1
+    STORAGE: 10Gi

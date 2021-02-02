@@ -1,0 +1,12 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: jenkins-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: jenkins-template
+  clusterServicePlanExternalName: jenkins-plan1
+  parameters:
+    APP_NAME: jenkins-test-deploy
+    STORAGE: 10Gi
+    SERVICE_TYPE: LoadBalancer

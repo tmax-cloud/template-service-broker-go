@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-package-server-maven
+  namespace: default
+spec:
+  containers:
+  - name: test
+    image: 192.168.6.110:5000/s2i-tomcat:latest
+    command:
+    - tail
+    - -f
+    - /dev/null

@@ -1,0 +1,161 @@
+apiVersion: tmax.io/v1
+kind: ClusterTemplate
+metadata:
+  name: redis-template
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+shortDescription: Redis Deployment
+longDescription: Redis Deployment
+urlDescription: https://redis.io/
+imageUrl: https://upload.wikimedia.org/wikipedia/en/6/6b/Redis_Logo.svg
+provider: tmax
+tags:
+- db
+- redis
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${APP_NAME}-service
+    labels:
+      app: ${APP_NAME}
+  spec:
+    type: ${SERVICE_TYPE}
+    ports:
+    - port: 6379
+    selector:
+      app: ${APP_NAME}
+      tier: redis
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${APP_NAME}-pvc
+    labels:
+      app: ${APP_NAME}
+  spec:
+    storageClassName: csi-cephfs-sc
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${DB_STORAGE}
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: ${APP_NAME}-secret
+  type: Opaque
+  stringData:
+    DATABASE_SERVICE_NAME: ${DATABASE_SERVICE_NAME}
+    REDIS_PASSWORD: ${REDIS_PASSWORD}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: ${APP_NAME}-redis
+    labels:
+      app: ${APP_NAME}
+  spec:
+    selector:
+      matchLabels:
+        app: ${APP_NAME}
+        tier: redis
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: ${APP_NAME}
+          tier: redis
+      spec:
+        containers:
+        - image: 192.168.6.110:5000/centos/redis:3.2
+          name: redis
+          env:
+          - name: DATABASE_SERVICE_NAME
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-secret
+                key: DATABASE_SERVICE_NAME
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-secret
+                key: REDIS_PASSWORD
+          ports:
+          - containerPort: 6379
+            name: redis
+          volumeMounts:
+          - name: redis-persistent-storage
+            mountPath: /var/lib/redis/data
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - redis-cli -h 127.0.0.1 -a $REDIS_PASSWORD ping
+        volumes:
+        - name: redis-persistent-storage
+          persistentVolumeClaim:
+            claimName: ${APP_NAME}-pvc
+parameters:
+- name: APP_NAME
+  displayName: AppName
+  description: Application name
+  required: true
+- name: DB_STORAGE
+  displayName: DBStorage
+  description: Storage size for DB
+  required: true
+- name: SERVICE_TYPE
+  displayName: ServiceType
+  description: Service Type (ClsuterIP/NodePort/LoadBalancer)
+  required: true
+- name: DATABASE_SERVICE_NAME
+  displayName: DatabaseServiceName
+  description: DatabaseServiceName
+  required: true
+- name: REDIS_PASSWORD
+  displayName: RedisPassword
+  description: RedisPassword
+  required: true
+plans:
+- name: redis-plan1
+  description: redis
+  metadata:
+    bullets:
+    - 'Storage Capacity: 5Gi'
+    costs:
+      amount: 100
+      unit: $
+  free: false
+  bindable: true
+  plan_updateable: false
+  schemas:
+    service_instance:
+      create:
+        parameters:
+          DB_STORAGE: 5Gi
+          APP_NAME: redis-deploy
+          DATABASE_SERVICE_NAME: redis
+          REDIS_PASSWORD: tmax@23
+- name: redis-plan2
+  description: redis
+  metadata:
+    bullets:
+    - 'Storage Capacity: 30Gi'
+    costs:
+      amount: 500
+      unit: $
+  free: false
+  bindable: true
+  plan_updateable: false
+  schemas:
+    service_instance:
+      create:
+        parameters:
+          DB_STORAGE: 30Gi
+          APP_NAME: redis-deploy
+          DATABASE_SERVICE_NAME: redis
+          REDIS_PASSWORD: tmax@23

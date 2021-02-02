@@ -1,0 +1,14 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: redis-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: redis-template
+  clusterServicePlanExternalName: redis-plan1
+  parameters:
+    APP_NAME: redis-sample-app
+    DB_STORAGE: "10Gi"
+    SERVICE_TYPE: ClusterIP
+    DATABASE_SERVICE_NAME: redis
+    REDIS_PASSWORD: tmax@23

@@ -1,0 +1,25 @@
+apiVersion: tmax.io/v1
+kind: TemplateInstance
+metadata:
+  name: postgresql-template-instance
+  namespace: default
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+spec:
+  clustertemplate:
+    metadata:
+      name: postgresql-template
+    parameters:
+    - name: APP_NAME
+      value: postgresql-sample-app
+    - name: DB_STORAGE
+      value: "10Gi"
+    - name: SERVICE_TYPE
+      value: ClusterIP
+    - name: POSTGRESQL_USER
+      value: root
+    - name: POSTGRESQL_PASSWORD
+      value: tmax@23
+    - name: POSTGRESQL_DATABASE
+      value: root

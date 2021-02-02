@@ -1,0 +1,15 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: mysql-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: mysql-template
+  clusterServicePlanExternalName: mysql-plan1
+  parameters:
+    APP_NAME: mysql-sample-app
+    DB_STORAGE: "10Gi"
+    SERVICE_TYPE: ClusterIP
+    MYSQL_USER: root1
+    MYSQL_PASSWORD: tmax@23
+    MYSQL_DATABASE: root1

@@ -1,0 +1,108 @@
+apiVersion: tmax.io/v1
+kind: ClusterTemplate
+metadata:
+  name: jenkins-template
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+shortDescription: "Jenkins Deployment"
+longDescription: "Jenkins Deployment"
+urlDescription: https://www.jenkins.io/
+imageUrl: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Jenkins_logo_with_title.svg"
+provider: tmax
+tags:
+- jenkins
+- cicd
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${APP_NAME}-service
+    labels:
+      app: ${APP_NAME}
+  spec:
+    type: ${SERVICE_TYPE}
+    ports:
+    - name: http
+      port: 8080
+    - name: agent
+      port: 50000
+    selector:
+      app: ${APP_NAME}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${APP_NAME}-pvc
+    labels:
+      app: ${APP_NAME}
+  spec:
+    storageClassName: csi-cephfs-sc
+    accessModes:
+    - ReadWriteMany
+    resources:
+      requests:
+        storage: ${STORAGE}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: ${APP_NAME}
+    labels:
+      app: ${APP_NAME}
+  spec:
+    selector:
+      matchLabels:
+        app: ${APP_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: ${APP_NAME}
+      spec:
+        containers:
+        - name: ${APP_NAME}
+          image: jenkins/jenkins:lts
+          ports:
+          - name: http
+            containerPort: 8080
+          - name: agent
+            containerPort: 50000
+          volumeMounts:
+          - name: ${APP_NAME}-pv
+            mountPath: /var/jenkins_home
+        volumes:
+        - name: ${APP_NAME}-pv
+          persistentVolumeClaim:
+            claimName: ${APP_NAME}-pvc
+parameters:
+- name: APP_NAME
+  displayName: AppName
+  description: A Jenkins Deployment Name
+  required: true
+- name: STORAGE
+  displayName: Storage
+  description: Storage size
+  required: true
+- name: SERVICE_TYPE
+  displayName: ServiceType
+  description: Service Type (ClsuterIP/NodePort/LoadBalancer)
+  required: true
+plans:
+- name: jenkins-plan1
+  description: "Jenkins Plan"
+  metadata:
+    bullets:
+    - "Jenkins Deployment Plan"
+    costs:
+      amount: 100
+      unit: $
+  free: false
+  bindable: true
+  plan_updateable: false
+  schemas:
+    service_instance:
+      create:
+        parameters:
+          APP_NAME: jenkins-deploy
+          STORAGE: 10Gi
+

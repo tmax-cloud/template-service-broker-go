@@ -1,0 +1,15 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: postgresql-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: postgresql-template
+  clusterServicePlanExternalName: postgresql-plan1
+  parameters:
+    APP_NAME: postgresql-sample-app
+    DB_STORAGE: "10Gi"
+    SERVICE_TYPE: ClusterIP
+    POSTGRESQL_USER: root
+    POSTGRESQL_PASSWORD: tmax@23
+    POSTGRESQL_DATABASE: root
