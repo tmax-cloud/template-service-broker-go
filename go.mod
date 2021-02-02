@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/gorilla/mux v1.8.0
+	github.com/kubernetes-sigs/service-catalog v0.3.1
 	github.com/tmax-cloud/template-operator v0.0.0-20210111053944-9b2aa0e1cc89
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6

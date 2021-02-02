@@ -12,6 +12,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/kubernetes-sigs/service-catalog/pkg/controller"
+	"github.com/kubernetes-sigs/service-catalog/pkg/util"
 	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 )
@@ -120,6 +122,7 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		Tags:        templateSpec.Tags,
 		Bindable:    false,
 		Metadata: map[string]string{
+			"serviceClassRefName": util.GenerateSHA(controller.GenerateEscapedName(templateName)),
 			"imageUrl":            templateSpec.ImageUrl,
 			"longDescription":     templateSpec.LongDescription,
 			"urlDescription":      templateSpec.UrlDescription,
