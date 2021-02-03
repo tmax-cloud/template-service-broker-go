@@ -1,0 +1,21 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: apache-cicd-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: apache-cicd-template
+  clusterServicePlanExternalName: apache-plan1
+  parameters:
+    APP_NAME: apache-sample-app
+    SERVICE_ACCOUNT_NAME: tutorial-service
+    GIT_URL: https://github.com/microsoft/project-html-website
+    GIT_REV: master
+    IMAGE_URL: '<이미지 주소>'
+    REGISTRY_SECRET_NAME: ''
+    WAS_PORT: 8080
+    SERVICE_TYPE: LoadBalancer
+    PACKAGE_SERVER_URL: ''
+    DEPLOY_ENV_JSON: "{'EX':'EXVAL', 'EX2': 'EXVAL2'}"
+    DEPLOY_RESOURCE_CPU: 500m
+    DEPLOY_RESOURCE_MEM: 500Mi

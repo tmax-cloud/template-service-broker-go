@@ -1,0 +1,27 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: nodejs-mysql-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: nodejs-mysql-template
+  clusterServicePlanExternalName: nodejs-mysql-plan1
+  parameters:
+    APP_NAME: nodejs-mysql-sample-app
+    SERVICE_ACCOUNT_NAME: tutorial-service
+    DB_SERVICE_TYPE: ClusterIP
+    WAS_SERVICE_TYPE: LoadBalancer
+    WAS_PORT: 3000
+    DB_STORAGE: 20Gi
+    MYSQL_USER: root1
+    MYSQL_PASSWORD: tmax@23
+    MYSQL_DATABASE: root1
+    GIT_URL: https://github.com/sunghyunkim3/nodejs-mysql-crud
+    GIT_REV: master
+    IMAGE_URL: 192.168.6.110:5000/nodejs-sample
+    REGISTRY_SECRET: ''
+    REGISTRY_ID: ''
+    REGISTRY_PW: ''
+    PACKAGE_SERVER_URL: ''
+    DEPLOY_RESOURCE_CPU: 500m
+    DEPLOY_RESOURCE_MEM: 500Mi

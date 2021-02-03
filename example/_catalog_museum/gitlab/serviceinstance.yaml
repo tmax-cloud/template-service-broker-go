@@ -1,0 +1,15 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: gitlab-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: gitlab-template
+  clusterServicePlanExternalName: gitlab-plan1
+  parameters:
+    APP_NAME: gitlab-test-deploy
+    STORAGE: 30Gi
+    SERVICE_TYPE: LoadBalancer
+    SSH_PORT: 2221
+    RESOURCE_CPU: "1"
+    RESOURCE_MEM: 4Gi

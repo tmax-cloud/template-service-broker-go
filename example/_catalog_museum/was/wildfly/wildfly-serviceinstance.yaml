@@ -1,0 +1,21 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: wildfly-cicd-template-instance
+  namespace: default
+spec:
+  clusterServiceClassExternalName: wildfly-cicd-template
+  clusterServicePlanExternalName: wildfly-plan1
+  parameters:
+    APP_NAME: wildfly-sample-app
+    SERVICE_ACCOUNT_NAME: tutorial-service
+    GIT_URL: https://github.com/sunghyunkim3/TomcatMavenApp
+    GIT_REV: master
+    IMAGE_URL: '<이미지 주소>'
+    REGISTRY_SECRET_NAME: ''
+    WAS_PORT: 8080
+    SERVICE_TYPE: LoadBalancer
+    PACKAGE_SERVER_URL: ''
+    DEPLOY_ENV_JSON: "{'EX':'EXVAL', 'EX2': 'EXVAL2'}"
+    DEPLOY_RESOURCE_CPU: 500m
+    DEPLOY_RESOURCE_MEM: 500Mi

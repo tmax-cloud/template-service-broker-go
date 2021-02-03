@@ -1,0 +1,216 @@
+apiVersion: tmax.io/v1
+kind: ClusterTemplate
+metadata:
+  name: apache-cicd-template
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+  labels:
+    cicd-template-was: apache
+imageUrl: https://upload.wikimedia.org/wikipedia/commons/4/45/Apache_HTTP_server_logo_%282016%29.png
+provider: tmax
+recommend: false
+shortDescription: Apache CI/CD Template
+longDescription: Apache CI/CD Template
+urlDescription: https://httpd.apache.org/
+tags:
+- was
+- apache
+plans:
+- bindable: false
+  description: apache
+  name: apache-plan1
+parameters:
+- name: APP_NAME
+  displayName: AppName
+  description: Application name
+  required: true
+- name: GIT_URL
+  displayName: GitURL
+  description: Git Repo. URL
+  required: true
+- name: GIT_REV
+  displayName: GitRev
+  description: Git Revision
+  required: true
+- name: IMAGE_URL
+  displayName: ImageURL
+  description: Output Image URL
+  required: true
+- name: REGISTRY_SECRET_NAME
+  displayName: RegistrySecret
+  description: Secret for accessing image registry
+  required: false
+  value: ''
+- name: SERVICE_ACCOUNT_NAME
+  displayName: serviceAccountName
+  description: Service Account Name
+  required: true
+- name: WAS_PORT
+  displayName: wasPort
+  description: WAS Port
+  valueType: number
+  required: true
+- name: SERVICE_TYPE
+  displayName: ServiceType
+  description: Service Type (ClusterIP/NodePort/LoadBalancer)
+  required: true
+- name: PACKAGE_SERVER_URL
+  displayName: PackageServerUrl
+  description: URL (including protocol, ip, port, and path) of private package server
+    (e.g., devpi, pypi, verdaccio, ...)
+  required: false
+- name: DEPLOY_ENV_JSON
+  displayName: DeployEnvJson
+  description: Deployment environment variable in JSON object form
+  required: false
+  value: '{}'
+- name: DEPLOY_RESOURCE_CPU
+  displayName: DeployResourceCpu
+  description: Deployment resource (cpu)
+  required: true
+- name: DEPLOY_RESOURCE_MEM
+  displayName: DeployResourceMem
+  description: Deployment resource (mem)
+  required: true
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${APP_NAME}-service
+    labels:
+      app: ${APP_NAME}
+  spec:
+    type: ${SERVICE_TYPE}
+    ports:
+    - port: ${WAS_PORT}
+    selector:
+      app: ${APP_NAME}
+      tier: was
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: ${APP_NAME}-deploy-cfg
+    labels:
+      app: ${APP_NAME}
+  data:
+    deploy-spec.yaml: |
+      spec:
+        selector:
+          matchLabels:
+            app: ${APP_NAME}
+            tier: was
+        template:
+          metadata:
+            labels:
+              app: ${APP_NAME}
+              tier: was
+          spec:
+            imagePullSecrets:
+            - name: ${REGISTRY_SECRET_NAME}
+            containers:
+            - ports:
+              - containerPort: ${WAS_PORT}
+              resources:
+                limits:
+                  cpu: ${DEPLOY_RESOURCE_CPU}
+                  memory: ${DEPLOY_RESOURCE_MEM}
+- apiVersion: tekton.dev/v1beta1
+  kind: Pipeline
+  metadata:
+    name: ${APP_NAME}-pipeline
+    labels:
+      app: ${APP_NAME}
+  spec:
+    params:
+    - name: app-name
+      type: string
+      description: Application name
+    - name: deploy-cfg-name
+      description: Configmap name for description
+    - name: deploy-env-json
+      description: Deployment environment variable in JSON object form
+    - name: git-url
+      description: Git url
+    - name: git-rev
+      description: Git revision
+    workspaces:
+    - name: git-source
+      description: The git repo will be cloned onto the volume backing this workspace
+    tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+      - name: output
+        workspace: git-source
+      params:
+      - name: url
+        value: $(params.git-url)
+      - name: revision
+        value: $(params.git-rev)
+    - name: build-source
+      taskRef:
+        name: s2i
+        kind: ClusterTask
+      runAfter:
+      - git-clone
+      workspaces:
+      - name: git-source
+        workspace: git-source
+      params:
+      - name: BUILDER_IMAGE
+        value: tmaxcloudck/s2i-apache:2.4
+      - name: PACKAGE_SERVER_URL
+        value: ${PACKAGE_SERVER_URL}
+      - name: REGISTRY_SECRET_NAME
+        value: ${REGISTRY_SECRET_NAME}
+      - name: IMAGE_URL
+        value: ${IMAGE_URL}
+    - name: deploy
+      taskRef:
+        name: generate-and-deploy-using-kubectl
+        kind: ClusterTask
+      runAfter:
+      - build-source
+      params:
+      - name: app-name
+        value: $(params.app-name)
+      - name: image-url
+        value: $(tasks.build-source.results.image-url)
+      - name: deploy-cfg-name
+        value: $(params.deploy-cfg-name)
+      - name: deploy-env-json
+        value: $(params.deploy-env-json)
+- apiVersion: tekton.dev/v1beta1
+  kind: PipelineRun
+  metadata:
+    name: ${APP_NAME}-pipeline-run-first
+    labels:
+      app: ${APP_NAME}
+  spec:
+    serviceAccountName: ${SERVICE_ACCOUNT_NAME}
+    pipelineRef:
+      name: ${APP_NAME}-pipeline
+    workspaces:
+    - name: git-source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          storageClassName: csi-cephfs-sc
+          resources:
+            requests:
+              storage: 500Mi
+    params:
+    - name: app-name
+      value: ${APP_NAME}
+    - name: deploy-cfg-name
+      value: ${APP_NAME}-deploy-cfg
+    - name: deploy-env-json
+      value: ${DEPLOY_ENV_JSON}
+    - name: git-url
+      value: ${GIT_URL}
+    - name: git-rev
+      value: ${GIT_REV}

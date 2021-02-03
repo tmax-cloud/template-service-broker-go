@@ -1,0 +1,39 @@
+apiVersion: tmax.io/v1
+kind: TemplateInstance
+metadata:
+  name: django-cicd-template-instance
+  namespace: default
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+  labels:
+    cicd-template-was: django
+spec:
+  clustertemplate:
+    metadata:
+      name: django-cicd-template
+    parameters:
+    - name: APP_NAME
+      value: django-sample-app
+    - name: SERVICE_ACCOUNT_NAME
+      value: tutorial-service
+    - name: GIT_URL
+      value: https://github.com/sunghyunkim3/django-realworld-example-app
+    - name: GIT_REV
+      value: master
+    - name: IMAGE_URL
+      value: '<이미지 주소>'
+    - name: REGISTRY_SECRET_NAME
+      value: ''
+    - name: WAS_PORT
+      value: 8080
+    - name: SERVICE_TYPE
+      value: LoadBalancer
+    - name: PACKAGE_SERVER_URL
+      value: ''
+    - name: DEPLOY_ENV_JSON
+      value: "{'EX':'EXVAL', 'EX2': 'EXVAL2'}"
+    - name: DEPLOY_RESOURCE_CPU
+      value: 500m
+    - name: DEPLOY_RESOURCE_MEM
+      value: 500Mi

@@ -1,0 +1,94 @@
+apiVersion: tmax.io/v1
+kind: ClusterTemplate
+metadata:
+  name: cicd-trigger-template
+  annotations:
+    template-version: 1.2.2
+    tested-operator-version: 4.1.3.2
+imageUrl: 'https://raw.githubusercontent.com/tektoncd/triggers/master/tekton-triggers.png'
+provider: tmax
+recommend: false
+shortDescription: Tekton Trigger for WAS CI/CD
+longDescription: Tekton Trigger for WAS CI/CD, which should be bound to the pre-instantiated WAS template instance
+urlDescription: https://github.com/tektoncd/triggers
+tags:
+- was
+- trigger
+parameters:
+- name: APP_NAME
+  displayName: AppName
+  description: Application name specified in WAS service instance
+  required: true
+- name: SERVICE_ACCOUNT_NAME
+  displayName: serviceAccountName
+  description: Service Account Name
+  required: true
+plans:
+- bindable: false
+  description: Default Plan
+  name: default
+objects:
+- apiVersion: triggers.tekton.dev/v1alpha1
+  kind: TriggerTemplate
+  metadata:
+    name: ${APP_NAME}-template
+  spec:
+    params:
+    - name: gitrevision
+      description: The git revision
+      default: master
+    - name: gitrepositoryurl
+      description: The git repository url
+    resourcetemplates:
+    - apiVersion: tekton.dev/v1alpha1
+      kind: PipelineRun
+      metadata:
+        generateName: ${APP_NAME}-run-
+      spec:
+        serviceAccountName: ${SERVICE_ACCOUNT_NAME}
+        pipelineRef:
+          name: ${APP_NAME}-pipeline
+        workspaces:
+          - name: git-source
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                - ReadWriteOnce
+                storageClassName: csi-cephfs-sc
+                resources:
+                  requests:
+                    storage: 500Mi
+        params:
+        - name: app-name
+          value: ${APP_NAME}
+        - name: deploy-cfg-name
+          value: ${APP_NAME}-deploy-cfg
+        - name: deploy-env-json
+          value: "{}"
+        - name: git-url
+          value: $(params.gitrepositoryurl)
+        - name: git-rev
+          value: $(params.gitrevision)
+- apiVersion: triggers.tekton.dev/v1alpha1
+  kind: TriggerBinding
+  metadata:
+    name: ${APP_NAME}-gitlab-binding
+  spec:
+    params:
+    - name: gitrevision
+      value: $(body.checkout_sha)
+    - name: gitrepositoryurl
+      value: $(body.repository.git_http_url)
+- apiVersion: triggers.tekton.dev/v1alpha1
+  kind: EventListener
+  metadata:
+    name: ${APP_NAME}-listener
+  spec:
+    serviceType: ClusterIP
+    serviceAccountName: tekton-triggers-example-sa
+    triggers:
+      - name: perform-cicd
+        bindings:
+          - name: ${APP_NAME}-gitlab-binding
+        template:
+          name: ${APP_NAME}-template
