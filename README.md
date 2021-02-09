@@ -20,9 +20,33 @@
 ## Install Namespaced-Template-Service-Broker
 > 사용자가 직접 만든 Template 서비스를 제공하기 위한 Broker 입니다.
 >> 비고: Template 생성한 네임스페이스에 Broker를 생성 해야 합니다.
-1. 아래의 command로 Namespaced-Template-Service-Broker를 생성 합니다.
+1. Namespaced-Template-Service-Broker를 설치하기 위한 네임스페이스를 생성 합니다.
+    - kubectl create namespace {YOUR_NAMESPACE}
+2. 아래의 command로 Namespaced-Template-Service-Broker를 생성 합니다.
     - kubectl apply -f tsb.yaml -n {YOUR_TEMPLATE_NAMESPACE} ([파일](./deploy/tsb.yaml))
     - 비고: deployment 내부의 image 경로는 사용자 환경에 맞게 수정 해야 합니다.
+
+---
+
+## Delete Cluster-Template-Service-Broker
+1. Cluster-Template-Service-Broker를 삭제 합니다.
+    - kubectl delete -f cluster_tsb.yaml -n {YOUR_NAMESPACE} ([파일](./deploy/cluster_tsb.yaml))
+    - 비고: {YOUR_NAMESPACE}는 설치 시의 namespace 입니다.
+2. Cluster-Template-Service-Broker를 설치한 namespace를 삭제 합니다.
+    - kubectl delete namespace {YOUR_NAMESPACE}
+    - 비고: {YOUR_NAMESPACE}는 설치 시의 namespace 입니다.
+
+---
+
+## Delete Namespaced-Template-Service-Broker
+1. Namespaced-Template-Service-Broker를 삭제 합니다.
+    - kubectl delete -f tsb.yaml -n {YOUR_TEMPLATE_NAMESPACE} ([파일](./deploy/tsb.yaml))
+    - 비고: {YOUR_NAMESPACE}는 설치 시의 namespace 입니다.
+2. Namespaced-Template-Service-Broker를 설치한 namespace를 삭제 합니다.
+    - kubectl delete namespace {YOUR_NAMESPACE}
+    - 비고: {YOUR_NAMESPACE}는 설치 시의 namespace 입니다.
+
+---
 
 ## Test
 ```shell
@@ -35,7 +59,7 @@ $ curl -X GET http://{SERVER_IP}:{SERVER_PORT}/v2/catalog
     apiVersion: servicecatalog.k8s.io/v1beta1
     kind: ClusterServiceBroker
     metadata:
-      name: hyperbroker4
+      name: hyperbroker5
     spec:
       url: 'http://{SERVER_IP}:{SERVER_PORT}'
     ```
@@ -44,7 +68,7 @@ $ curl -X GET http://{SERVER_IP}:{SERVER_PORT}/v2/catalog
     apiVersion: servicecatalog.k8s.io/v1beta1
     kind: ServiceBroker
     metadata:
-      name: hyperbroker4
+      name: hyperbroker5
       namespace: {YOUR_TEMPLATE_NAMESPACE}
     spec:
       url: 'http://{SERVER_IP}:{SERVER_PORT}'

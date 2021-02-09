@@ -16,7 +16,7 @@ spec:
     spec:
       serviceAccountName: tsb-sa
       containers:
-      - image: 192.168.6.122:5000/tsb:0.0.1
+      - image: tmaxcloudck/tsb:0.0.1
         name: tsb
         imagePullPolicy: Always
 ---
