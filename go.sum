@@ -297,6 +297,8 @@ github.com/tmax-cloud/template-operator v0.0.0-20210305075005-73873ad4c400 h1:zZ
 github.com/tmax-cloud/template-operator v0.0.0-20210305075005-73873ad4c400/go.mod h1:Vp2Cn3LTtK3kh1PVk9jO6YuTrp8HNFmxOcrs9R25n8Q=
 github.com/tmax-cloud/template-operator v0.0.0-20210312073500-c142fad12757 h1:ZFcuPTAOAo/0gFjzzTT9bcev9g48X5tWmWJaPr7jN7g=
 github.com/tmax-cloud/template-operator v0.0.0-20210312073500-c142fad12757/go.mod h1:Vp2Cn3LTtK3kh1PVk9jO6YuTrp8HNFmxOcrs9R25n8Q=
+github.com/tmax-cloud/template-operator v0.0.0-20210324013110-d35a77c12859 h1:1ap5cFU4pRIfQno++ouYbV4+P7yYVFcYOGqX3glqB9c=
+github.com/tmax-cloud/template-operator v0.0.0-20210324013110-d35a77c12859/go.mod h1:Vp2Cn3LTtK3kh1PVk9jO6YuTrp8HNFmxOcrs9R25n8Q=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
