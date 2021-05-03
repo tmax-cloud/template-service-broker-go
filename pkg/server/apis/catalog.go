@@ -117,7 +117,7 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 	//create service struct
 	service := schemas.Service{
 		Name:        templateName,
-		Id:          templateName,
+		Id:          uid,
 		Description: templateSpec.ShortDescription,
 		Tags:        templateSpec.Tags,
 		Bindable:    false,

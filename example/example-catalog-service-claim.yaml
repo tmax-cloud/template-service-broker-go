@@ -1,0 +1,7 @@
+apiVersion: tmax.io/v1
+kind: CatalogServiceClaim
+metadata:
+  name: example-catalog-service-claim
+  namespace: tsb-ns
+spec:
+  template: nginx-template   
