@@ -71,17 +71,42 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get template to verify service class and plans exist
-	template, err := internal.GetTemplate(c, types.NamespacedName{
-		Namespace: ns,
-		Name:      m.ServiceId,
-	})
+	templates, err := internal.GetTemplateList(c, ns)
+	if err != nil {
+		log.Error(err, "error occurs while getting templateList")
+		respondError(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "BadRequest",
+			Description:      fmt.Sprintf("cannot find templateList on the %s namespace", ns),
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		})
+		return
+	}
 
-	plan := &tmaxv1.PlanSpec{}
-	if err != nil || !isPlanValid(&template.TemplateSpec, m.PlanId, plan, string(template.UID)) { // cannot find template or plan
+	var template *tmaxv1.Template
+	for _, tp := range templates.Items {
+		if m.ServiceId == string(tp.UID) {
+			template = &tp
+		}
+	}
+
+	if template == nil {
 		log.Error(err, "error occurs while getting template")
 		respondError(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
-			Description:      "cannot find template or plan on the namespace",
+			Description:      fmt.Sprintf("cannot find template %s on the %s namespace", m.ServiceId, ns),
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		})
+		return
+	}
+
+	plan := &tmaxv1.PlanSpec{}
+	if !isPlanValid(&template.TemplateSpec, m.PlanId, plan, string(template.UID)) {
+		log.Error(err, "error occurs while validating plan")
+		respondError(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "BadRequest",
+			Description:      "cannot find plan",
 			InstanceUsable:   false,
 			UpdateRepeatable: false,
 		})
@@ -93,7 +118,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 
 	// create template instance
 	if _, err = internal.CreateTemplateInstance(c, template, ns, m, serviceInstanceId); err != nil {
-		log.Error(err, "error occurs while getting template")
+		log.Error(err, "error occurs while creating template instance")
 		respondError(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot create template instance",
@@ -245,22 +270,47 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get template to verify service class and plans exist
-	template, err := internal.GetClusterTemplate(c, types.NamespacedName{
-		Name: m.ServiceId,
-	})
-
-	plan := &tmaxv1.PlanSpec{}
-	if err != nil || !isPlanValid(&template.TemplateSpec, m.PlanId, plan, string(template.UID)) { // cannot find template or plan
-		log.Error(err, "error occurs while getting template")
+	templates, err := internal.GetClusterTemplateList(c)
+	if err != nil {
+		log.Error(err, "error occurs while getting templateList")
 		respondError(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
-			Description:      "cannot find template or plan on the namespace",
+			Description:      "cannot find ClusterTemplateList",
 			InstanceUsable:   false,
 			UpdateRepeatable: false,
 		})
 		return
 	}
 
+	var template *tmaxv1.ClusterTemplate
+	for _, tp := range templates.Items {
+		if m.ServiceId == string(tp.UID) {
+			template = &tp
+		}
+	}
+
+	if template == nil {
+		log.Error(err, "error occurs while getting template")
+		respondError(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "BadRequest",
+			Description:      fmt.Sprintf("cannot find ClusterTemplate %s", m.ServiceId),
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		})
+		return
+	}
+
+	plan := &tmaxv1.PlanSpec{}
+	if !isPlanValid(&template.TemplateSpec, m.PlanId, plan, string(template.UID)) {
+		log.Error(err, "error occurs while validating plan")
+		respondError(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "BadRequest",
+			Description:      "cannot find plan",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		})
+		return
+	}
 	// update template parameters using plan
 	updatePlanParams(&m, plan)
 
@@ -334,8 +384,8 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deleteIdx := -1
-	for idx, template := range templateInstances.Items {
-		if template.Name == name {
+	for idx, templateInstance := range templateInstances.Items {
+		if templateInstance.Name == name {
 			deleteIdx = idx
 			break
 		}
