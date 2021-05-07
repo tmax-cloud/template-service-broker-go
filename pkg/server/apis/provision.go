@@ -87,6 +87,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	for _, tp := range templates.Items {
 		if m.ServiceId == string(tp.UID) {
 			template = &tp
+			break
 		}
 	}
 
@@ -286,6 +287,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	for _, tp := range templates.Items {
 		if m.ServiceId == string(tp.UID) {
 			template = &tp
+			break
 		}
 	}
 
@@ -305,7 +307,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		log.Error(err, "error occurs while validating plan")
 		respondError(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
-			Description:      "cannot find plan",
+			Description:      fmt.Sprintf("cannot find plan %s", m.PlanId),
 			InstanceUsable:   false,
 			UpdateRepeatable: false,
 		})
@@ -432,7 +434,6 @@ func respondError(w http.ResponseWriter, statusCode int, message *schemas.Error)
 }
 
 func isPlanValid(templateSpec *tmaxv1.TemplateSpec, planId string, plan *tmaxv1.PlanSpec, uid string) bool {
-
 	tokIdx := strings.LastIndex(planId, "-")
 	planUid := planId[:tokIdx]
 	planIdx := planId[tokIdx+1:]

@@ -122,7 +122,7 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		Tags:        templateSpec.Tags,
 		Bindable:    false,
 		Metadata: map[string]string{
-			"serviceClassRefName": util.GenerateSHA(controller.GenerateEscapedName(templateName)),
+			"serviceClassRefName": util.GenerateSHA(controller.GenerateEscapedName(uid)),
 			"imageUrl":            templateSpec.ImageUrl,
 			"longDescription":     templateSpec.LongDescription,
 			"urlDescription":      templateSpec.UrlDescription,
