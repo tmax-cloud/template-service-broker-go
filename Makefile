@@ -1,7 +1,7 @@
 SDK	= operator-sdk
 
 REGISTRY      ?= tmaxcloudck
-VERSION       ?= 0.0.8
+VERSION       ?= 0.0.9
 
 PACKAGE_NAME  = github.com/tmax-cloud/template-service-broker-go
 

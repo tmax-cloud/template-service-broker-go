@@ -39,7 +39,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	s := scheme.Scheme
 	if err := tmaxv1.AddToScheme(s); err != nil {
 		log.Error(err, "cannot add Template scheme")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot add Template scheme",
 			InstanceUsable:   false,
@@ -50,7 +50,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	c, err := internal.Client(client.Options{Scheme: s})
 	if err != nil {
 		log.Error(err, "cannot connect to k8s api server")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot connect to k8s api server",
 			InstanceUsable:   false,
@@ -61,7 +61,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	ns, err := internal.Namespace()
 	if err != nil {
 		log.Error(err, "error occurs while getting namespace")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot get namespace. Check it is operated on cluster.",
 			InstanceUsable:   false,
@@ -74,7 +74,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	templates, err := internal.GetTemplateList(c, ns)
 	if err != nil {
 		log.Error(err, "error occurs while getting templateList")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      fmt.Sprintf("cannot find templateList on the %s namespace", ns),
 			InstanceUsable:   false,
@@ -93,7 +93,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 
 	if template == nil {
 		log.Error(err, "error occurs while getting template")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      fmt.Sprintf("cannot find template %s on the %s namespace", m.ServiceId, ns),
 			InstanceUsable:   false,
@@ -105,7 +105,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	plan := &tmaxv1.PlanSpec{}
 	if !isPlanValid(&template.TemplateSpec, m.PlanId, plan, string(template.UID)) {
 		log.Error(err, "error occurs while validating plan")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      "cannot find plan",
 			InstanceUsable:   false,
@@ -120,7 +120,7 @@ func ProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	// create template instance
 	if _, err = internal.CreateTemplateInstance(c, template, ns, m, serviceInstanceId); err != nil {
 		log.Error(err, "error occurs while creating template instance")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot create template instance",
 			InstanceUsable:   false,
@@ -151,7 +151,7 @@ func DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	s := scheme.Scheme
 	if err := tmaxv1.AddToScheme(s); err != nil {
 		log.Error(err, "cannot add Template scheme")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot add Template scheme",
 			InstanceUsable:   false,
@@ -162,7 +162,7 @@ func DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	c, err := internal.Client(client.Options{Scheme: s})
 	if err != nil {
 		log.Error(err, "cannot connect to k8s api server")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot connect to k8s api server",
 			InstanceUsable:   false,
@@ -174,7 +174,7 @@ func DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	ns, err := internal.Namespace()
 	if err != nil {
 		log.Error(err, "error occurs while getting namespace")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot get namespace. Check it is operated on cluster.",
 			InstanceUsable:   false,
@@ -191,21 +191,16 @@ func DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		Name:      name,
 	})
 
-	if err != nil { // cannot find template or plan
-		log.Error(err, "error occurs while getting template")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
-			Error:            "BadRequest",
-			Description:      "cannot find templateInstance on the namespace",
-			InstanceUsable:   false,
-			UpdateRepeatable: false,
-		})
+	// If there is no templateinstance, deprovision is complete because there is no instance to delete.
+	if err != nil {
+		log.Info(fmt.Sprintf("TemplateInstance %s does not exist", name))
+		respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{})
 		return
 	}
 
-	err = internal.DeleteTemplateInstance(c, templateInstance)
-	if err != nil {
+	if err := internal.DeleteTemplateInstance(c, templateInstance); err != nil {
 		log.Error(err, "error occurs while deleting templateInstance")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      "cannot delete templateInstance on the namespace",
 			InstanceUsable:   false,
@@ -214,13 +209,7 @@ func DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := schemas.ServiceInstanceProvisionResponse{}
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Error(err, "cannot response")
-		return
-	}
-
+	respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{})
 }
 
 func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +229,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	s := scheme.Scheme
 	if err := tmaxv1.AddToScheme(s); err != nil {
 		log.Error(err, "cannot add Template scheme")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot add Template scheme",
 			InstanceUsable:   false,
@@ -251,7 +240,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	c, err := internal.Client(client.Options{Scheme: s})
 	if err != nil {
 		log.Error(err, "cannot connect to k8s api server")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot connect to k8s api server",
 			InstanceUsable:   false,
@@ -261,7 +250,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	}
 	ns := m.Context.Namespace
 	if ns == "" {
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot get namespace. Check it is operated on cluster.",
 			InstanceUsable:   false,
@@ -274,7 +263,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	templates, err := internal.GetClusterTemplateList(c)
 	if err != nil {
 		log.Error(err, "error occurs while getting templateList")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      "cannot find ClusterTemplateList",
 			InstanceUsable:   false,
@@ -293,7 +282,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 
 	if template == nil {
 		log.Error(err, "error occurs while getting template")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      fmt.Sprintf("cannot find ClusterTemplate %s", m.ServiceId),
 			InstanceUsable:   false,
@@ -305,7 +294,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	plan := &tmaxv1.PlanSpec{}
 	if !isPlanValid(&template.TemplateSpec, m.PlanId, plan, string(template.UID)) {
 		log.Error(err, "error occurs while validating plan")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      fmt.Sprintf("cannot find plan %s", m.PlanId),
 			InstanceUsable:   false,
@@ -319,7 +308,7 @@ func ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	// create template instance
 	if _, err = internal.CreateTemplateInstance(c, template, ns, m, serviceInstanceId); err != nil {
 		log.Error(err, "error occurs while getting template")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot create template instance",
 			InstanceUsable:   false,
@@ -350,7 +339,7 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	s := scheme.Scheme
 	if err := tmaxv1.AddToScheme(s); err != nil {
 		log.Error(err, "cannot add Template scheme")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot add Template scheme",
 			InstanceUsable:   false,
@@ -361,7 +350,7 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	c, err := internal.Client(client.Options{Scheme: s})
 	if err != nil {
 		log.Error(err, "cannot connect to k8s api server")
-		respondError(w, http.StatusInternalServerError, &schemas.Error{
+		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot connect to k8s api server",
 			InstanceUsable:   false,
@@ -373,10 +362,10 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	name := fmt.Sprintf("%s.%s.%s", serviceId, planId, serviceInstanceId)
 
 	// get templateinstance in all namespace
-	templateInstances, err := internal.GetTemplateInstanceList(c, "")
-	if err != nil { // cannot find template or plan
+	templateInstanceList, err := internal.GetTemplateInstanceList(c, "")
+	if err != nil {
 		log.Error(err, "error occurs while getting templateinstanceList")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      "cannot find templateInstanceList on the all namespace",
 			InstanceUsable:   false,
@@ -385,29 +374,24 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deleteIdx := -1
-	for idx, templateInstance := range templateInstances.Items {
-		if templateInstance.Name == name {
-			deleteIdx = idx
+	var templateInstance *tmaxv1.TemplateInstance
+	for _, ti := range templateInstanceList.Items {
+		if ti.Name == name {
+			templateInstance = &ti
 			break
 		}
 	}
 
-	if deleteIdx < 0 {
-		log.Error(err, "cannot find templateinstance")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
-			Error:            "BadRequest",
-			Description:      "cannot delete templateInstance on the namespace",
-			InstanceUsable:   false,
-			UpdateRepeatable: false,
-		})
+	// If there is no templateinstance, deprovision is complete because there is no instance to delete.
+	if templateInstance == nil {
+		log.Info(fmt.Sprintf("TemplateInstance %s does not exist", name))
+		respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{})
 		return
 	}
 
-	err = internal.DeleteTemplateInstance(c, &templateInstances.Items[deleteIdx])
-	if err != nil {
+	if err := internal.DeleteTemplateInstance(c, templateInstance); err != nil {
 		log.Error(err, "error occurs while deleting templateInstance")
-		respondError(w, http.StatusBadRequest, &schemas.Error{
+		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
 			Description:      "cannot delete templateInstance on the namespace",
 			InstanceUsable:   false,
@@ -416,20 +400,13 @@ func ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := schemas.ServiceInstanceProvisionResponse{}
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Error(err, "cannot response")
-		return
-	}
+	respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{})
 }
 
-func respondError(w http.ResponseWriter, statusCode int, message *schemas.Error) {
-	log.Error(fmt.Errorf(message.Description), "error occurred")
-
+func respond(w http.ResponseWriter, statusCode int, body interface{}) {
 	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(message); err != nil {
-		log.Error(err, "cannot respond")
+	if err := json.NewEncoder(w).Encode(body); err != nil {
+		log.Error(err, "Error occurs while encoding response body")
 	}
 }
 
