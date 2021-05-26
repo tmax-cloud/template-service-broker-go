@@ -1,0 +1,410 @@
+openapi: "3.0.1"
+info:
+  description: "This document contains APIs for Service Catalog. \n
+  Email: [joonyoung_moon@tmax.co.kr]"
+  version: "1.0.0"
+  title: "ServiceCatalog"
+servers:
+  - url: https://192.168.6.122:6443
+paths:
+  /apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers:
+    post:
+      tags:
+        - ClusterServiceBroker
+      summary: Create ClusterServiceBroker
+      operationId: createClusterServiceBroker
+      requestBody:
+        description: "링크 참조: https://github.com/tmax-cloud/template-service-broker-go/blob/master/example/example_cluster_service_broker.yaml" 
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                apiVersion:
+                  type: string
+                  example: servicecatalog.k8s.io/v1beta1
+                kind:
+                  type: string
+                  example: ClusterServiceBroker
+                metadata:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: hyperbroker4
+                spec:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      example: http://{tsb_ip}:{tsb_port}
+      responses:
+        '200':
+          description: Success create clusterservicebroker
+          content: 
+            application/json:
+              schema:
+                type: object
+    get:
+      tags:
+        - ClusterServiceBroker
+      summary: Get ClusterServiceBrokerList
+      operationId: getClusterServiceBrokerList
+      responses:
+        '200':
+          description: Get ClusterServiceBroker List
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/{clusterservicebroker-name}:
+    get:
+      tags:
+        - ClusterServiceBroker
+      summary: Get ClusterServiceBroker
+      operationId: getClusterServiceBroker
+      parameters:
+        - name: clusterservicebroker-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ClusterServiceBroker
+          content: 
+            application/json:
+              schema:
+                type: object
+    delete:
+      tags:
+        - ClusterServiceBroker
+      summary: Delete ClusterServiceBroker
+      operationId: deleteClusterServiceBroker
+      parameters:
+        - name: clusterservicebroker-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success delete ClusterServiceBroker
+        '405':
+          description: Invalid input
+          content: {}
+                
+  /apis/servicecatalog.k8s.io/v1beta1/clusterserviceclasses:
+    get:
+      tags:
+        - ClusterServiceClass
+      summary: Get ClusterServiceClassList
+      operationId: getClusterServiceClassList
+      responses:
+        '200':
+          description: Get ClusterServiceClass List
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/clusterserviceclasses/{clusterserviceclass-name}:
+    get:
+      tags:
+        - ClusterServiceClass
+      summary: Get ClusterServiceClass
+      operationId: getClusterServiceClass
+      parameters:
+        - name: clusterserviceclass-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ClusterServiceClass
+          content: 
+            application/json:
+              schema:
+                type: object
+                
+  /apis/servicecatalog.k8s.io/v1beta1/clusterserviceplans:
+    get:
+      tags:
+        - ClusterServicePlan
+      summary: Get ClusterServicePlanList
+      operationId: getClusterServicePlanList
+      responses:
+        '200':
+          description: Get ClusterServicePlan List
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/clusterserviceplans/{clusterserviceplan-name}:
+    get:
+      tags:
+        - ClusterServicePlan
+      summary: Get ClusterServicePlan
+      operationId: getClusterServicePlan
+      parameters:
+        - name: clusterserviceplan-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ClusterServicePlan
+          content: 
+            application/json:
+              schema:
+                type: object
+  
+  /apis/servicecatalog.k8s.io/v1beta1/servicebrokers:       
+    get:
+      tags:
+        - ServiceBroker
+      summary: Get ServiceBrokerList in all-namespace
+      operationId: getServiceBrokerList in all-namespace
+      responses:
+        '200':
+          description: Get ServiceBroker List
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/namespaces/{namespace-name}/servicebrokers:
+    post:
+      tags:
+        - ServiceBroker
+      summary: Create ServiceBroker
+      operationId: createServiceBroker
+      parameters:
+        - name: namespace-name
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: "링크 참조: https://github.com/tmax-cloud/template-service-broker-go/blob/master/example/example_service_broker.yaml" 
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                apiVersion:
+                  type: string
+                  example: servicecatalog.k8s.io/v1beta1
+                kind:
+                  type: string
+                  example: ServiceBroker
+                metadata:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: hyperbroker4
+                    namespace:
+                      type: string
+                      example: tsb-ns
+                spec:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      example: http://{tsb_ip}:{tsb_port}
+      responses:
+        '200':
+          description: Success create servicebroker
+          content: 
+            application/json:
+              schema:
+                type: object
+    get:
+      tags:
+        - ServiceBroker
+      summary: Get ServiceBrokerList
+      operationId: getServiceBrokerList
+      parameters:
+        - name: namespace-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ServiceBroker List
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/namespaces/{namespace-name}/servicebrokers/{servicebroker-name}:
+    get:
+      tags:
+        - ServiceBroker
+      summary: Get ServiceBroker
+      operationId: getServiceBroker
+      parameters:
+        - name: namespace-name
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: servicebroker-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ClusterServiceBroker
+          content: 
+            application/json:
+              schema:
+                type: object
+    delete:
+      tags:
+        - ServiceBroker
+      summary: Delete ServiceBroker
+      operationId: deleteServiceBroker
+      parameters:
+        - name: namespace-name
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: servicebroker-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success delete ServiceBroker
+        '405':
+          description: Invalid input
+          content: {}
+                
+  /apis/servicecatalog.k8s.io/v1beta1/serviceclasses:
+    get:
+      tags:
+        - ServiceClass
+      summary: Get ServiceClassList in all-namespace
+      operationId: getServiceClassList in all-namespace
+      responses:
+        '200':
+          description: Get ServiceClass List in all-namespace
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/namespaces/{namespace-name}/serviceclasses:
+    get:
+      tags:
+        - ServiceClass
+      summary: Get ServiceClassList
+      operationId: getServiceClassList
+      parameters:
+        - name: namespace-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ServiceClassList
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/namespaces/{namespace-name}/serviceclasses/{serviceclass-name}:
+    get:
+      tags:
+        - ServiceClass
+      summary: Get ServiceClass
+      operationId: getServiceClass
+      parameters:
+        - name: namespace-name
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: serviceclass-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ServiceClass
+          content: 
+            application/json:
+              schema:
+                type: object
+
+  /apis/servicecatalog.k8s.io/v1beta1/serviceplans:
+    get:
+      tags:
+        - ServicePlan
+      summary: Get ServicePlanList in all-namespace
+      operationId: getServicePlanList in all-namespace
+      responses:
+        '200':
+          description: Get ServicePlan List in all-namespace
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/namespaces/{namespace-name}/serviceplans:
+    get:
+      tags:
+        - ServicePlan
+      summary: Get ServicePlanList
+      operationId: getServicePlanList
+      parameters:
+        - name: namespace-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ServicePlanList
+          content: 
+            application/json:
+              schema:
+                type: object
+  /apis/servicecatalog.k8s.io/v1beta1/namespaces/{namespace-name}/serviceplans/{serviceplan-name}:
+    get:
+      tags:
+        - ServicePlan
+      summary: Get ServicePlan
+      operationId: getServicePlan
+      parameters:
+        - name: namespace-name
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: serviceplan-name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Get ServicePlan
+          content: 
+            application/json:
+              schema:
+                type: object
+    
+  #todo: service instance
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []

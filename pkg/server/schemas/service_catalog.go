@@ -3,7 +3,7 @@ package schemas
 import "k8s.io/apimachinery/pkg/util/intstr"
 
 type Catalog struct {
-	Services []Service `json:"services`
+	Services []Service `json:"services"`
 }
 
 type Service struct {
@@ -14,9 +14,9 @@ type Service struct {
 	Requires        []string          `json:"requires,omitempty"`
 	Bindable        bool              `json:"bindable"`
 	Metadata        map[string]string `json:"metadata,omitempty"`
-	DashboardClient DashBoardClient   `json:"dashboard_client,omitempty`
+	DashboardClient DashBoardClient   `json:"dashboard_client,omitempty"`
 	PlanUpdateable  bool              `json:"plan_updateable,omitempty"`
-	Plans           []PlanSpec        `json:"plans`
+	Plans           []PlanSpec        `json:"plans"`
 }
 
 type DashBoardClient struct {

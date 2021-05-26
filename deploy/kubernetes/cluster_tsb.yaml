@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cluster-template-service-broker
+  name: cluster-template-service-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-template-service-broker
+  template:
+    metadata:
+      labels:
+        app: cluster-template-service-broker
+    spec:
+      serviceAccountName: cluster-tsb-sa
+      containers:
+      - image: tmaxcloudck/cluster-tsb:0.0.5
+        name: cluster-tsb
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: cluster-template-service-broker
+  name: cluster-template-service-broker
+spec:
+  selector:
+    app: cluster-template-service-broker
+  ports:
+  - port: 80
+    targetPort: 8081
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: cluster-template-service-broker
+  name: cluster-tsb-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-tsb-role
+rules:
+- apiGroups: ["tmax.io"]
+  resources: ["templates", "templateinstances", "clustertemplates"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["secrets", "services"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-tsb-rb
+subjects:
+- kind: ServiceAccount
+  name: cluster-tsb-sa
+  namespace: cluster-tsb-ns
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: cluster-tsb-role
+  apiGroup: rbac.authorization.k8s.io
