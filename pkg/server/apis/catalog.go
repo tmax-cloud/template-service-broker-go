@@ -2,15 +2,14 @@ package apis
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/go-logr/logr"
 	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/kubernetes-sigs/service-catalog/pkg/controller"
 	"github.com/kubernetes-sigs/service-catalog/pkg/util"
@@ -18,102 +17,77 @@ import (
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 )
 
-var logCatalog = logf.Log.WithName("Catalog")
+type Catalog struct {
+	client.Client
+	Log logr.Logger
+}
 
-func GetCatalog(w http.ResponseWriter, r *http.Request) {
-
+func (c *Catalog) GetCatalog(w http.ResponseWriter, r *http.Request) {
 	// set response
 	response := &schemas.Catalog{}
 	w.Header().Set("Content-Type", "application/json")
 
-	//add templatelist schema
-	s := scheme.Scheme
-	internal.AddKnownTypes(s)
-	SchemeBuilder := runtime.NewSchemeBuilder()
-	if err := SchemeBuilder.AddToScheme(s); err != nil {
-		logCatalog.Error(err, "cannot add TemplateList scheme")
-	}
-
-	// connect k8s client
-	c, err := internal.Client(client.Options{Scheme: s})
-	if err != nil {
-		logCatalog.Error(err, "cannot connect k8s api server")
-	}
-
 	namespace, err := internal.Namespace()
 	if err != nil {
-		logCatalog.Error(err, "cannot get namespace")
+		c.Log.Error(err, "cannot get namespace")
+		respond(w, http.StatusInternalServerError, &schemas.Error{
+			Error:            "InternalServerError",
+			Description:      "cannot get namespace. Check it is operated on cluster.",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		}, c.Log)
+		return
 	}
 
 	// get templatelist
-	templateList, err := internal.GetTemplateList(c, namespace)
+	templateList, err := internal.GetTemplateList(c.Client, namespace)
 	if err != nil {
-		logCatalog.Error(err, "cannot get templateList info")
+		c.Log.Error(err, "error occurs while getting templateList")
+		respond(w, http.StatusInternalServerError, &schemas.Error{
+			Error:            "InternalServerError",
+			Description:      fmt.Sprintf("cannot find templateList on the %s namespace", namespace),
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		}, c.Log)
+		return
 	}
 
 	for _, template := range templateList.Items {
 		//make service
-		service := MakeService(template.Name, &template.TemplateSpec, string(template.UID))
+		service := c.MakeService(template.Name, &template.TemplateSpec, string(template.UID))
 		response.Services = append(response.Services, service)
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
-func GetClusterCatalog(w http.ResponseWriter, r *http.Request) {
-
+func (c *Catalog) GetClusterCatalog(w http.ResponseWriter, r *http.Request) {
 	// set response
 	response := &schemas.Catalog{}
 	w.Header().Set("Content-Type", "application/json")
 
-	//add templatelist schema
-	s := scheme.Scheme
-	internal.AddKnownTypes(s)
-	SchemeBuilder := runtime.NewSchemeBuilder()
-	if err := SchemeBuilder.AddToScheme(s); err != nil {
-		logCatalog.Error(err, "cannot add TemplateList scheme")
-	}
-
-	// connect k8s client
-	c, err := internal.Client(client.Options{Scheme: s})
-	if err != nil {
-		logCatalog.Error(err, "cannot connect k8s api server")
-	}
-
 	// get templatelist
-	clusterTemplateList, err := internal.GetClusterTemplateList(c)
+	clusterTemplateList, err := internal.GetClusterTemplateList(c.Client)
 	if err != nil {
-		logCatalog.Error(err, "cannot get clustertemplateList info")
+		c.Log.Error(err, "error occurs while getting templateList")
+		respond(w, http.StatusInternalServerError, &schemas.Error{
+			Error:            "InternalServerError",
+			Description:      "cannot find cluster-templateList",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		}, c.Log)
 	}
 
 	for _, template := range clusterTemplateList.Items {
 		//make service
-		service := MakeService(template.Name, &template.TemplateSpec, string(template.UID))
+		service := c.MakeService(template.Name, &template.TemplateSpec, string(template.UID))
 		response.Services = append(response.Services, service)
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
-func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid string) schemas.Service {
-	if templateSpec.ShortDescription == "" {
-		templateSpec.ShortDescription = templateName
-	}
-
-	if templateSpec.ImageUrl == "" {
-		templateSpec.ImageUrl = "https://folo.co.kr/img/gm_noimage.png"
-	}
-	if templateSpec.LongDescription == "" {
-		templateSpec.LongDescription = templateName
-	}
-
-	if templateSpec.MarkDownDescription == "" {
-		templateSpec.MarkDownDescription = templateName
-	}
-
-	if templateSpec.Provider == "" {
-		templateSpec.Provider = "tmax"
-	}
+func (c *Catalog) MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid string) schemas.Service {
 	//create service struct
 	service := schemas.Service{
 		Name:        templateName,
@@ -152,7 +126,7 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 	for i, templatePlan := range templateSpec.Plans {
 		planParameters := templatePlan.Schemas.ServiceInstance.Create.Parameters
 		catalogProperties := make(map[string]schemas.PropertiesSpec)
-		for key, _ := range properties {
+		for key := range properties {
 			property := properties[key]
 			if paramVal, ok := planParameters[key]; ok {
 				property.Default = paramVal
@@ -227,7 +201,7 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 	for _, object := range templateSpec.Objects {
 		var raw map[string]interface{}
 		if err := json.Unmarshal(object.Raw, &raw); err != nil {
-			logCatalog.Error(err, "cannot get object info")
+			c.Log.Error(err, "cannot get object info")
 		}
 		//get kind, namespace, name of object
 		kind := raw["kind"].(string)
@@ -237,4 +211,11 @@ func MakeService(templateName string, templateSpec *tmaxv1.TemplateSpec, uid str
 		}
 	}
 	return service
+}
+
+func respond(w http.ResponseWriter, statusCode int, body interface{}, log logr.Logger) {
+	w.WriteHeader(statusCode)
+	if err := json.NewEncoder(w).Encode(body); err != nil {
+		log.Error(err, "Error occurs while encoding response body")
+	}
 }

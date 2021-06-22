@@ -5,7 +5,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
+	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/apis"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -27,8 +31,21 @@ func main() {
 	router := mux.NewRouter()
 	apiRouter := router.PathPrefix(apiPathPrefix).Subrouter()
 
+	s := scheme.Scheme
+	if err := tmaxv1.AddToScheme(s); err != nil {
+		panic(err)
+	}
+	c, err := internal.Client(client.Options{Scheme: s})
+	if err != nil {
+		panic(err)
+	}
+
 	//catalog
-	apiRouter.HandleFunc(serviceCatalogPrefix, apis.GetClusterCatalog).Methods("GET")
+	catalog := apis.Catalog{
+		Client: c,
+		Log:    logf.Log.WithName("Catalog"),
+	}
+	apiRouter.HandleFunc(serviceCatalogPrefix, catalog.GetClusterCatalog).Methods("GET")
 
 	//provision
 	apiRouter.HandleFunc(serviceInstancePrefix, apis.ClusterProvisionServiceInstance).Methods("PUT")
