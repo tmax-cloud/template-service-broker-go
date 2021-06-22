@@ -3,35 +3,38 @@ package apis
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
+	"github.com/go-logr/logr"
 	"github.com/gorilla/mux"
 	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-var logBind = logf.Log.WithName("binding")
+type Binding struct {
+	client.Client
+	Log logr.Logger
+}
 
-func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
-	var m schemas.ServiceBindingRequest
-
-	//set reponse
-	response := &schemas.ServiceBindingResponse{}
-	response.Credentials = make(map[string]interface{})
+func (b *Binding) BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	var m schemas.ServiceBindingRequest
 
 	//get request body
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
-		logBind.Error(err, "error occurs while decoding service binding body")
-		w.WriteHeader(http.StatusBadRequest)
+		b.Log.Error(err, "error occurs while decoding service binding body")
+		respond(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "Bad Request",
+			Description:      "Cannot decode service binding request body",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		}, b.Log)
 		return
 	}
 
@@ -42,146 +45,51 @@ func BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	instanceName := m.ServiceId + "." + m.PlanId + "." + vars["instance_id"]
 	instanceNameSpace, err := internal.Namespace()
 	if err != nil {
-		logBind.Error(err, "cannot get namespace")
+		b.Log.Error(err, "cannot get namespace")
 		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
 			Description:      "cannot get namespace. Check it is operated on cluster.",
 			InstanceUsable:   false,
 			UpdateRepeatable: false,
-		})
-	}
-
-	//add template & template instance schema
-	s := scheme.Scheme
-	internal.AddKnownTypes(s)
-	SchemeBuilder := runtime.NewSchemeBuilder()
-	if err := SchemeBuilder.AddToScheme(s); err != nil {
-		logBind.Error(err, "cannot add Template/Templateinstance scheme")
-		respond(w, http.StatusInternalServerError, &schemas.Error{
-			Error:            "InternalServerError",
-			Description:      "cannot add Template/Templateinstance scheme",
-			InstanceUsable:   false,
-			UpdateRepeatable: true,
-		})
-		return
-	}
-
-	// connect k8s client
-	c, err := internal.Client(client.Options{Scheme: s})
-	if err != nil {
-		logBind.Error(err, "cannot connect k8s api server")
-		respond(w, http.StatusInternalServerError, &schemas.Error{
-			Error:            "InternalServerError",
-			Description:      "cannot connect to k8s api server",
-			InstanceUsable:   false,
-			UpdateRepeatable: true,
-		})
-		return
+		}, b.Log)
 	}
 
 	// get templateinstance info
-	templateInstance, err := internal.GetTemplateInstance(c, types.NamespacedName{Name: instanceName, Namespace: instanceNameSpace})
+	templateInstance, err := internal.GetTemplateInstance(b.Client, types.NamespacedName{Name: instanceName, Namespace: instanceNameSpace})
 	if err != nil {
-		logBind.Error(err, "cannot get templateinstance info")
+		b.Log.Error(err, "cannot get templateinstance info")
 		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
-			Description:      "cannot find templateinstance on the namespace",
+			Description:      fmt.Sprintf("cannot find templateinstance on the %s namespace", instanceNameSpace),
 			InstanceUsable:   false,
 			UpdateRepeatable: false,
-		})
+		}, b.Log)
 		return
 	}
 
-	// parse object info in template info
-	for _, object := range templateInstance.Spec.Template.Objects {
-		var raw map[string]interface{}
-		if err := json.Unmarshal(object.Raw, &raw); err != nil {
-			logBind.Error(err, "cannot get object info")
-			respond(w, http.StatusBadRequest, &schemas.Error{
-				Error:            "BadRequest",
-				Description:      "cannot find object info of template",
-				InstanceUsable:   false,
-				UpdateRepeatable: false,
-			})
-			return
-		}
-
-		//get kind, namespace, name of object
-		kind := raw["kind"].(string)
-		name := raw["metadata"].(map[string]interface{})["name"].(string)
-		namespace := instanceNameSpace
-
-		if strings.Compare(kind, "Service") == 0 {
-			//set endpoint in case of service
-			service := &corev1.Service{}
-			if err := c.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, service); err != nil {
-				logBind.Error(err, "error occurs while getting service info")
-				respond(w, http.StatusBadRequest, &schemas.Error{
-					Error:            "BadRequest",
-					Description:      "cannot get service info of template",
-					InstanceUsable:   false,
-					UpdateRepeatable: false,
-				})
-				return
-			}
-			if service.Spec.Type == corev1.ServiceTypeLoadBalancer {
-				ports := []string{}
-				for _, port := range service.Spec.Ports {
-					ports = append(ports, strconv.FormatInt(int64(port.Port), 10))
-				}
-				for _, ingress := range service.Status.LoadBalancer.Ingress {
-					endpoint := schemas.ServiceBindingEndpoint{
-						Host:  ingress.IP,
-						Ports: ports,
-					}
-					response.Endpoints = append(response.Endpoints, endpoint)
-				}
-			}
-
-		} else if strings.Compare(kind, "Secret") == 0 {
-			//set credentials in case of secret
-			secret := &corev1.Secret{}
-			if err := c.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, secret); err != nil {
-				logBind.Error(err, "error occurs while getting secret info")
-				respond(w, http.StatusBadRequest, &schemas.Error{
-					Error:            "BadRequest",
-					Description:      "cannot get secret info of template",
-					InstanceUsable:   false,
-					UpdateRepeatable: false,
-				})
-				return
-			}
-			for key, val := range secret.Data {
-				response.Credentials[key] = string(val)
-			}
-		}
-	}
-	//set credential if not empty Endpoints
-	if len(response.Endpoints) != 0 {
-		response.Credentials["endpoints"] = response.Endpoints
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-}
-
-func UnBindingServiceInstance(w http.ResponseWriter, r *http.Request) {
-	response := &schemas.AsyncOperation{}
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func ClusterBindingServiceInstance(w http.ResponseWriter, r *http.Request) {
-	var m schemas.ServiceBindingRequest
-
 	//set reponse
 	response := &schemas.ServiceBindingResponse{}
-	response.Credentials = make(map[string]interface{})
+	if err := b.getBindingInfo(templateInstance.Spec.Template.Objects, instanceNameSpace, response); err != nil {
+		b.Log.Error(err, "Error occurs while get binding info")
+		respond(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "BadRequest",
+			Description:      "Error occurs while get binding info",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		}, b.Log)
+		return
+	}
+
+	respond(w, http.StatusOK, response, b.Log)
+}
+
+func (b *Binding) ClusterBindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	var m schemas.ServiceBindingRequest
 
 	//get request body
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
-		logBind.Error(err, "error occurs while decoding service binding body")
+		b.Log.Error(err, "error occurs while decoding service binding body")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -193,89 +101,54 @@ func ClusterBindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	instanceName := m.ServiceId + "." + m.PlanId + "." + vars["instance_id"]
 	instanceNameSpace := m.Context.Namespace
 
-	if instanceNameSpace == "" {
-		logBind.Info("cannot get instanceNamespace")
-		respond(w, http.StatusInternalServerError, &schemas.Error{
-			Error:            "InternalServerError",
-			Description:      "cannot get namespace. Check it is operated on cluster.",
-			InstanceUsable:   false,
-			UpdateRepeatable: false,
-		})
-		return
-	}
-
-	//add template & template instance schema
-	s := scheme.Scheme
-	internal.AddKnownTypes(s)
-	SchemeBuilder := runtime.NewSchemeBuilder()
-	if err := SchemeBuilder.AddToScheme(s); err != nil {
-		logBind.Error(err, "cannot add Template/Templateinstance scheme")
-		respond(w, http.StatusInternalServerError, &schemas.Error{
-			Error:            "InternalServerError",
-			Description:      "cannot add Template/Templateinstance scheme",
-			InstanceUsable:   false,
-			UpdateRepeatable: true,
-		})
-		return
-	}
-
-	// connect k8s client
-	c, err := internal.Client(client.Options{Scheme: s})
-	if err != nil {
-		logBind.Error(err, "cannot connect k8s api server")
-		respond(w, http.StatusInternalServerError, &schemas.Error{
-			Error:            "InternalServerError",
-			Description:      "cannot connect to k8s api server",
-			InstanceUsable:   false,
-			UpdateRepeatable: true,
-		})
-		return
-	}
-
 	// get templateinstance info
-	templateInstance, err := internal.GetTemplateInstance(c, types.NamespacedName{Name: instanceName, Namespace: instanceNameSpace})
+	templateInstance, err := internal.GetTemplateInstance(b.Client, types.NamespacedName{Name: instanceName, Namespace: instanceNameSpace})
 	if err != nil {
-		logBind.Error(err, "cannot get templateinstance info")
+		b.Log.Error(err, "cannot get templateinstance info")
 		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "BadRequest",
-			Description:      "cannot find templateinstance on the namespace",
+			Description:      fmt.Sprintf("cannot find templateinstance on the %s namespace", instanceNameSpace),
 			InstanceUsable:   false,
 			UpdateRepeatable: false,
-		})
+		}, b.Log)
 		return
 	}
 
-	// parse object info in template info
-	for _, object := range templateInstance.Spec.ClusterTemplate.Objects {
-		var raw map[string]interface{}
-		if err := json.Unmarshal(object.Raw, &raw); err != nil {
-			logBind.Error(err, "cannot get object info")
-			respond(w, http.StatusBadRequest, &schemas.Error{
-				Error:            "BadRequest",
-				Description:      "cannot find object info of template",
-				InstanceUsable:   false,
-				UpdateRepeatable: false,
-			})
-			return
+	//set reponse
+	response := &schemas.ServiceBindingResponse{}
+	if err := b.getBindingInfo(templateInstance.Spec.ClusterTemplate.Objects, instanceNameSpace, response); err != nil {
+		b.Log.Error(err, "Error occurs while get binding info")
+		respond(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "BadRequest",
+			Description:      "Error occurs while get binding info",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		}, b.Log)
+		return
+	}
+
+	respond(w, http.StatusOK, response, b.Log)
+}
+
+func (b *Binding) getBindingInfo(objects []runtime.RawExtension, ns string, response *schemas.ServiceBindingResponse) error {
+	response.Credentials = make(map[string]interface{})
+
+	for _, object := range objects {
+		var unmarshaledObject map[string]interface{}
+		if err := json.Unmarshal(object.Raw, &unmarshaledObject); err != nil {
+			b.Log.Error(err, "Error occurs while unmarshal object info")
+			return err
 		}
 
 		//get kind, namespace, name of object
-		kind := raw["kind"].(string)
-		name := raw["metadata"].(map[string]interface{})["name"].(string)
-		namespace := instanceNameSpace
-
-		if strings.Compare(kind, "Service") == 0 {
+		kind := unmarshaledObject["kind"].(string)
+		name := unmarshaledObject["metadata"].(map[string]interface{})["name"].(string)
+		if kind == "Service" {
 			//set endpoint in case of service
 			service := &corev1.Service{}
-			if err := c.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, service); err != nil {
-				logBind.Error(err, "error occurs while getting service info")
-				respond(w, http.StatusBadRequest, &schemas.Error{
-					Error:            "BadRequest",
-					Description:      "cannot get service info of template",
-					InstanceUsable:   false,
-					UpdateRepeatable: false,
-				})
-				return
+			if err := b.Client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: name}, service); err != nil {
+				b.Log.Error(err, "error occurs while get service info")
+				return err
 			}
 			if service.Spec.Type == corev1.ServiceTypeLoadBalancer {
 				ports := []string{}
@@ -290,29 +163,28 @@ func ClusterBindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 					response.Endpoints = append(response.Endpoints, endpoint)
 				}
 			}
-
-		} else if strings.Compare(kind, "Secret") == 0 {
+		}
+		if kind == "Secret" {
 			//set credentials in case of secret
 			secret := &corev1.Secret{}
-			if err := c.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, secret); err != nil {
-				logBind.Error(err, "error occurs while getting secret info")
-				respond(w, http.StatusBadRequest, &schemas.Error{
-					Error:            "BadRequest",
-					Description:      "cannot get secret info of template",
-					InstanceUsable:   false,
-					UpdateRepeatable: false,
-				})
-				return
+			if err := b.Client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: name}, secret); err != nil {
+				b.Log.Error(err, "error occurs while get secret info")
+				return err
 			}
 			for key, val := range secret.Data {
 				response.Credentials[key] = string(val)
 			}
 		}
 	}
-	//set credential if not empty Endpoints
+
+	//set credential if Endpoint is not empty
 	if len(response.Endpoints) != 0 {
 		response.Credentials["endpoints"] = response.Endpoints
 	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+
+	return nil
+}
+
+func (b *Binding) UnBindingServiceInstance(w http.ResponseWriter, r *http.Request) {
+	respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{}, b.Log)
 }

@@ -56,8 +56,12 @@ func main() {
 	apiRouter.HandleFunc(serviceInstancePrefix, provision.ClusterDeprovisionServiceInstance).Methods("DELETE")
 
 	//binding
-	apiRouter.HandleFunc(serviceBindingPrefix, apis.ClusterBindingServiceInstance).Methods("PUT")
-	apiRouter.HandleFunc(serviceBindingPrefix, apis.UnBindingServiceInstance).Methods("DELETE")
+	binding := apis.Binding{
+		Client: c,
+		Log:    logf.Log.WithName("Binding"),
+	}
+	apiRouter.HandleFunc(serviceBindingPrefix, binding.ClusterBindingServiceInstance).Methods("PUT")
+	apiRouter.HandleFunc(serviceBindingPrefix, binding.UnBindingServiceInstance).Methods("DELETE")
 
 	http.Handle("/", router)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
