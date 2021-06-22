@@ -48,8 +48,12 @@ func main() {
 	apiRouter.HandleFunc(serviceCatalogPrefix, catalog.GetCatalog).Methods("GET")
 
 	//provision
-	apiRouter.HandleFunc(serviceInstancePrefix, apis.ProvisionServiceInstance).Methods("PUT")
-	apiRouter.HandleFunc(serviceInstancePrefix, apis.DeprovisionServiceInstance).Methods("DELETE")
+	provision := apis.Provision{
+		Client: c,
+		Log:    logf.Log.WithName("Provision"),
+	}
+	apiRouter.HandleFunc(serviceInstancePrefix, provision.ProvisionServiceInstance).Methods("PUT")
+	apiRouter.HandleFunc(serviceInstancePrefix, provision.DeprovisionServiceInstance).Methods("DELETE")
 
 	//binding
 	apiRouter.HandleFunc(serviceBindingPrefix, apis.BindingServiceInstance).Methods("PUT")

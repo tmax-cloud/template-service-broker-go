@@ -48,8 +48,12 @@ func main() {
 	apiRouter.HandleFunc(serviceCatalogPrefix, catalog.GetClusterCatalog).Methods("GET")
 
 	//provision
-	apiRouter.HandleFunc(serviceInstancePrefix, apis.ClusterProvisionServiceInstance).Methods("PUT")
-	apiRouter.HandleFunc(serviceInstancePrefix, apis.ClusterDeprovisionServiceInstance).Methods("DELETE")
+	provision := apis.Provision{
+		Client: c,
+		Log:    logf.Log.WithName("Provision"),
+	}
+	apiRouter.HandleFunc(serviceInstancePrefix, provision.ClusterProvisionServiceInstance).Methods("PUT")
+	apiRouter.HandleFunc(serviceInstancePrefix, provision.ClusterDeprovisionServiceInstance).Methods("DELETE")
 
 	//binding
 	apiRouter.HandleFunc(serviceBindingPrefix, apis.ClusterBindingServiceInstance).Methods("PUT")
