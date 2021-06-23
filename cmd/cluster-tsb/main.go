@@ -5,7 +5,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
+	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/apis"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -27,16 +31,37 @@ func main() {
 	router := mux.NewRouter()
 	apiRouter := router.PathPrefix(apiPathPrefix).Subrouter()
 
+	s := scheme.Scheme
+	if err := tmaxv1.AddToScheme(s); err != nil {
+		panic(err)
+	}
+	c, err := internal.Client(client.Options{Scheme: s})
+	if err != nil {
+		panic(err)
+	}
+
 	//catalog
-	apiRouter.HandleFunc(serviceCatalogPrefix, apis.GetClusterCatalog).Methods("GET")
+	catalog := apis.Catalog{
+		Client: c,
+		Log:    logf.Log.WithName("Catalog"),
+	}
+	apiRouter.HandleFunc(serviceCatalogPrefix, catalog.GetClusterCatalog).Methods("GET")
 
 	//provision
-	apiRouter.HandleFunc(serviceInstancePrefix, apis.ClusterProvisionServiceInstance).Methods("PUT")
-	apiRouter.HandleFunc(serviceInstancePrefix, apis.ClusterDeprovisionServiceInstance).Methods("DELETE")
+	provision := apis.Provision{
+		Client: c,
+		Log:    logf.Log.WithName("Provision"),
+	}
+	apiRouter.HandleFunc(serviceInstancePrefix, provision.ClusterProvisionServiceInstance).Methods("PUT")
+	apiRouter.HandleFunc(serviceInstancePrefix, provision.ClusterDeprovisionServiceInstance).Methods("DELETE")
 
 	//binding
-	apiRouter.HandleFunc(serviceBindingPrefix, apis.ClusterBindingServiceInstance).Methods("PUT")
-	apiRouter.HandleFunc(serviceBindingPrefix, apis.UnBindingServiceInstance).Methods("DELETE")
+	binding := apis.Binding{
+		Client: c,
+		Log:    logf.Log.WithName("Binding"),
+	}
+	apiRouter.HandleFunc(serviceBindingPrefix, binding.ClusterBindingServiceInstance).Methods("PUT")
+	apiRouter.HandleFunc(serviceBindingPrefix, binding.UnBindingServiceInstance).Methods("DELETE")
 
 	http.Handle("/", router)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
