@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/go-logr/logr"
-	"github.com/gorilla/mux"
 	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
 	corev1 "k8s.io/api/core/v1"
@@ -38,11 +37,8 @@ func (b *Binding) BindingServiceInstance(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	//get url param
-	vars := mux.Vars(r)
-
 	//get templateinstance name & namespace
-	instanceName := m.ServiceId + "." + m.PlanId + "." + vars["instance_id"]
+	instanceName := m.Context.InstanceName
 	instanceNameSpace, err := internal.Namespace()
 	if err != nil {
 		b.Log.Error(err, "cannot get namespace")
@@ -94,11 +90,8 @@ func (b *Binding) ClusterBindingServiceInstance(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	//get url param
-	vars := mux.Vars(r)
-
 	//get templateinstance name & namespace
-	instanceName := m.ServiceId + "." + m.PlanId + "." + vars["instance_id"]
+	instanceName := m.Context.InstanceName
 	instanceNameSpace := m.Context.Namespace
 
 	// get templateinstance info

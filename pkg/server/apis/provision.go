@@ -9,11 +9,9 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	"github.com/gorilla/mux"
 	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
 	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -38,9 +36,6 @@ func (p *Provision) ProvisionServiceInstance(w http.ResponseWriter, r *http.Requ
 		}, p.Log)
 		return
 	}
-
-	// extract variables
-	serviceInstanceId := mux.Vars(r)["instanceId"]
 
 	ns, err := internal.Namespace()
 	if err != nil {
@@ -99,7 +94,7 @@ func (p *Provision) ProvisionServiceInstance(w http.ResponseWriter, r *http.Requ
 	}
 
 	// create template instance
-	if _, err = internal.CreateTemplateInstance(p.Client, template, ns, m, serviceInstanceId); err != nil {
+	if _, err = internal.CreateTemplateInstance(p.Client, template, ns, m); err != nil {
 		p.Log.Error(err, "error occurs while creating template instance")
 		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
@@ -119,7 +114,6 @@ func (p *Provision) DeprovisionServiceInstance(w http.ResponseWriter, r *http.Re
 	query, _ := url.ParseQuery(r.URL.RawQuery)
 
 	// extract variables
-	serviceInstanceId := mux.Vars(r)["instanceId"]
 	serviceId := query["service_id"][0]
 	planId := query["plan_id"][0]
 
@@ -135,16 +129,10 @@ func (p *Provision) DeprovisionServiceInstance(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	name := fmt.Sprintf("%s.%s.%s", serviceId, planId, serviceInstanceId)
-
-	templateInstance, err := internal.GetTemplateInstance(p.Client, types.NamespacedName{
-		Namespace: ns,
-		Name:      name,
-	})
-
+	templateInstance, err := internal.GetTemplateInstanceForDeprovision(p.Client, serviceId, planId, ns)
 	// If there is no templateinstance, deprovision is complete because there is no instance to delete.
 	if err != nil {
-		p.Log.Info(fmt.Sprintf("TemplateInstance %s does not exist", name))
+		p.Log.Info("TemplateInstance does not exist")
 		respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{}, p.Log)
 		return
 	}
@@ -172,9 +160,6 @@ func (p *Provision) ClusterProvisionServiceInstance(w http.ResponseWriter, r *ht
 		p.Log.Error(err, "error occurs while decoding service instance body")
 		return
 	}
-
-	// extract variables
-	serviceInstanceId := mux.Vars(r)["instanceId"]
 
 	templates, err := internal.GetClusterTemplateList(p.Client)
 	if err != nil {
@@ -211,7 +196,7 @@ func (p *Provision) ClusterProvisionServiceInstance(w http.ResponseWriter, r *ht
 	updatePlanParams(&m, template.TemplateSpec, string(template.UID))
 
 	// create template instance
-	if _, err = internal.CreateTemplateInstance(p.Client, template, m.Context.Namespace, m, serviceInstanceId); err != nil {
+	if _, err = internal.CreateTemplateInstance(p.Client, template, m.Context.Namespace, m); err != nil {
 		p.Log.Error(err, "error occurs while creating template instance")
 		respond(w, http.StatusInternalServerError, &schemas.Error{
 			Error:            "InternalServerError",
@@ -231,11 +216,8 @@ func (p *Provision) ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *
 	query, _ := url.ParseQuery(r.URL.RawQuery)
 
 	// extract variables
-	serviceInstanceId := mux.Vars(r)["instanceId"]
 	serviceId := query["service_id"][0]
 	planId := query["plan_id"][0]
-
-	name := fmt.Sprintf("%s.%s.%s", serviceId, planId, serviceInstanceId)
 
 	// get templateinstance in all namespace
 	templateInstanceList, err := internal.GetTemplateInstanceList(p.Client, "")
@@ -252,7 +234,7 @@ func (p *Provision) ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *
 
 	var templateInstance *tmaxv1.TemplateInstance
 	for _, ti := range templateInstanceList.Items {
-		if ti.Name == name {
+		if ti.ObjectMeta.Annotations["uid"] == serviceId+"."+planId {
 			templateInstance = &ti
 			break
 		}
@@ -260,7 +242,7 @@ func (p *Provision) ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *
 
 	// If there is no templateinstance, deprovision is complete because there is no instance to delete.
 	if templateInstance == nil {
-		p.Log.Info(fmt.Sprintf("TemplateInstance %s does not exist", name))
+		p.Log.Info("TemplateInstance does not exist")
 		respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{}, p.Log)
 		return
 	}
@@ -286,14 +268,14 @@ func updatePlanParams(request *schemas.ServiceInstanceProvisionRequest, template
 	planIdx := request.PlanId[tokIdx+1:]
 
 	if planUid != templateUid {
-		return fmt.Errorf("Plan has invalid UID")
+		return fmt.Errorf("plan has invalid uid")
 	}
 
 	plan := tmaxv1.PlanSpec{}
 	if len(templateSpec.Plans) != 0 {
 		idx, _ := strconv.Atoi(planIdx)
 		if idx >= len(templateSpec.Plans) {
-			return fmt.Errorf("Plan has invalid index")
+			return fmt.Errorf("plan has invalid index")
 		}
 		plan = templateSpec.Plans[idx]
 	}
