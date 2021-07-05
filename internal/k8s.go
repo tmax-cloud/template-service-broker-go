@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -45,6 +44,20 @@ func GetTemplateInstance(c client.Client, name types.NamespacedName) (*tmaxv1.Te
 	return templateInstance, nil
 }
 
+func GetTemplateInstanceForDeprovision(c client.Client, svcid string, planid string, ns string) (*tmaxv1.TemplateInstance, error) {
+	templateInstanceList, _ := GetTemplateInstanceList(c, ns)
+	var templateInstance *tmaxv1.TemplateInstance
+
+	for _, ti := range templateInstanceList.Items {
+		if ti.ObjectMeta.Annotations["uid"] == svcid+"."+planid {
+			templateInstance = &ti
+			break
+		}
+	}
+
+	return templateInstance, nil
+}
+
 func GetTemplateInstanceList(c client.Client, namespace string) (*tmaxv1.TemplateInstanceList, error) {
 	templateInstances := &tmaxv1.TemplateInstanceList{}
 	if err := c.List(context.TODO(), templateInstances, client.InNamespace(namespace)); err != nil {
@@ -55,24 +68,29 @@ func GetTemplateInstanceList(c client.Client, namespace string) (*tmaxv1.Templat
 }
 
 func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
-	request schemas.ServiceInstanceProvisionRequest, serviceInstanceId string) (*tmaxv1.TemplateInstance, error) {
+	request schemas.ServiceInstanceProvisionRequest) (*tmaxv1.TemplateInstance, error) {
 	var parameters []tmaxv1.ParamSpec
 	template := &tmaxv1.Template{}
 	clusterTemplate := &tmaxv1.ClusterTemplate{}
 	template.Parameters = []tmaxv1.ParamSpec{}
 	clusterTemplate.Parameters = []tmaxv1.ParamSpec{}
 
-	name := fmt.Sprintf("%s.%s.%s", request.ServiceId, request.PlanId, serviceInstanceId)
+	name := fmt.Sprintf("%s", request.Context.InstanceName)
 	log.Info(fmt.Sprintf("service instance name: %s", name))
 
 	labels := make(map[string]string)
 	labels["serviceInstanceRef"] = request.Context.InstanceName
+
+	annotations := make(map[string]string)
+	annotations["uid"] = request.ServiceId + "." + request.PlanId
+
 	// form template instance
 	templateInstance := &tmaxv1.TemplateInstance{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    labels,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 	}
 
@@ -98,7 +116,7 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 		if val, ok := request.Parameters[param.Name]; ok { // if a param was given
 			parameters[idx].Value = val
 		} else if param.Required { // if not found && the param was required
-			return nil, errors.New(fmt.Sprintf("parameter %s must be included", param.Name))
+			return nil, fmt.Errorf("parameter %s must be included", param.Name)
 		}
 	}
 
