@@ -129,17 +129,9 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 		return nil, err
 	}
 
-	// if exists, return the existing template instance
-	log.Info("the template instance already existed. return existing template")
-	existingTemplateInstance, err := GetTemplateInstance(c, types.NamespacedName{
-		Namespace: templateInstance.Namespace,
-		Name:      templateInstance.Name,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return existingTemplateInstance, nil
+	// if exists, return the nil
+	log.Info("The same name of template instance is already existing. Please change service instance name")
+	return nil, err
 }
 
 func DeleteTemplateInstance(c client.Client, templateInstance *tmaxv1.TemplateInstance) error {
