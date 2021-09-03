@@ -95,13 +95,14 @@ func (c *Catalog) MakeService(templateName string, templateSpec *tmaxv1.Template
 		Description: templateSpec.ShortDescription,
 		Tags:        templateSpec.Tags,
 		Bindable:    false,
-		Metadata: map[string]string{
+		Metadata: map[string]interface{}{
 			"serviceClassRefName": util.GenerateSHA(controller.GenerateEscapedName(uid)),
 			"imageUrl":            templateSpec.ImageUrl,
 			"longDescription":     templateSpec.LongDescription,
 			"urlDescription":      templateSpec.UrlDescription,
 			"markdownDescription": templateSpec.MarkDownDescription,
 			"providerDisplayName": templateSpec.Provider,
+			"categories":          templateSpec.Categories,
 			"recommend":           strconv.FormatBool(templateSpec.Recommend),
 		},
 		PlanUpdateable: false,

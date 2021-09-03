@@ -7,16 +7,16 @@ type Catalog struct {
 }
 
 type Service struct {
-	Name            string            `json:"name"`
-	Id              string            `json:"id"`
-	Description     string            `json:"description"`
-	Tags            []string          `json:"tags,omitempty"`
-	Requires        []string          `json:"requires,omitempty"`
-	Bindable        bool              `json:"bindable"`
-	Metadata        map[string]string `json:"metadata,omitempty"`
-	DashboardClient DashBoardClient   `json:"dashboard_client,omitempty"`
-	PlanUpdateable  bool              `json:"plan_updateable,omitempty"`
-	Plans           []PlanSpec        `json:"plans"`
+	Name            string                 `json:"name"`
+	Id              string                 `json:"id"`
+	Description     string                 `json:"description"`
+	Tags            []string               `json:"tags,omitempty"`
+	Requires        []string               `json:"requires,omitempty"`
+	Bindable        bool                   `json:"bindable"`
+	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	DashboardClient DashBoardClient        `json:"dashboard_client,omitempty"`
+	PlanUpdateable  bool                   `json:"plan_updateable,omitempty"`
+	Plans           []PlanSpec             `json:"plans"`
 }
 
 type DashBoardClient struct {

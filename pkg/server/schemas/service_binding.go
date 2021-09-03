@@ -23,7 +23,7 @@ type ServiceBindingResponse struct {
 }
 
 type ServiceBindingMetadata struct {
-	ExpiresAt string `json:"expires_at,omitemtpy"`
+	ExpiresAt string `json:"expires_at,omitempty"`
 }
 
 type ServiceBindingVolumeMount struct {

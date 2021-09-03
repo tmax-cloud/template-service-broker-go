@@ -4,6 +4,7 @@ metadata:
   labels:
     app: cluster-template-service-broker
   name: cluster-template-service-broker
+  namespace: cluster-tsb-ns
 spec:
   replicas: 1
   selector:
@@ -16,7 +17,7 @@ spec:
     spec:
       serviceAccountName: cluster-tsb-sa
       containers:
-      - image: tmaxcloudck/cluster-tsb:0.0.5
+      - image: tmaxcloudck/cluster-tsb:latest
         name: cluster-tsb
         imagePullPolicy: Always
 ---
@@ -40,6 +41,7 @@ metadata:
   labels:
     app: cluster-template-service-broker
   name: cluster-tsb-sa
+  namespace: cluster-tsb-ns
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
