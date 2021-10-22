@@ -100,21 +100,36 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 		templateInstance.Spec.Template = &tmaxv1.ObjectInfo{}
 		templateInstance.Spec.Template.Metadata.Name = template.ObjectMeta.Name
 		templateInstance.Spec.Template.Parameters = template.Parameters
-		templateInstance.Spec.Template.Objects = template.Objects
-		parameters = templateInstance.Spec.Template.Parameters[0:]
+		//		templateInstance.Spec.Template.Objects = template.Objects  // Deprecated since template operator 0.2.0
+		parameters = templateInstance.Spec.Template.Parameters
 	case *tmaxv1.ClusterTemplate:
 		clusterTemplate = obj.(*tmaxv1.ClusterTemplate)
 		templateInstance.Spec.ClusterTemplate = &tmaxv1.ObjectInfo{}
 		templateInstance.Spec.ClusterTemplate.Metadata.Name = clusterTemplate.ObjectMeta.Name
 		templateInstance.Spec.ClusterTemplate.Parameters = clusterTemplate.Parameters
-		templateInstance.Spec.ClusterTemplate.Objects = clusterTemplate.Objects
-		parameters = templateInstance.Spec.ClusterTemplate.Parameters[0:]
+		//		templateInstance.Spec.ClusterTemplate.Objects = clusterTemplate.Objects // Deprecated since template operator 0.2.0
+		parameters = templateInstance.Spec.ClusterTemplate.Parameters
 	}
 
+	// check if serviceInstance has required parameters or not
 	for idx, param := range parameters {
-		// if param in plan
+		// if param in serviceInstance
 		if val, ok := request.Parameters[param.Name]; ok { // if a param was given
-			parameters[idx].Value = val
+			if param.Required {
+				if val.Type == 1 && len(val.StrVal) == 0 {
+					// All parameter types filled in UI console have val.Type 1 (string type)
+					return nil, fmt.Errorf("parameter %s must be included", param.Name)
+				}
+				if val.Type == 0 && val.IntVal == 0 {
+					// [TODO] : Check if it has problems
+					return nil, fmt.Errorf("parameter %s must be included", param.Name)
+				}
+				parameters[idx].Value = val
+
+			} else {
+				parameters[idx].Value = val
+			}
+
 		} else if param.Required { // if not found && the param was required
 			return nil, fmt.Errorf("parameter %s must be included", param.Name)
 		}
