@@ -1,5 +1,5 @@
 REGISTRY      ?= tmaxcloudck
-VERSION       ?= 0.0.9
+VERSION       ?= 0.1.2
 
 SERVICE_BROKER_IMG   = $(REGISTRY)/tsb:$(VERSION)
 CLUSTER_SERVICE_BROKER_IMG = $(REGISTRY)/cluster-tsb:$(VERSION)
