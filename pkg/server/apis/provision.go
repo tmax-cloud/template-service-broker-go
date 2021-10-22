@@ -96,9 +96,9 @@ func (p *Provision) ProvisionServiceInstance(w http.ResponseWriter, r *http.Requ
 	// create template instance
 	if _, err = internal.CreateTemplateInstance(p.Client, template, ns, m); err != nil {
 		p.Log.Error(err, "error occurs while creating template instance")
-		respond(w, http.StatusInternalServerError, &schemas.Error{
-			Error:            "InternalServerError",
-			Description:      "cannot create template instance",
+		respond(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "Cannot create template instance",
+			Description:      "Required parameters may be ommited or templateinstance with same name already exists",
 			InstanceUsable:   false,
 			UpdateRepeatable: true,
 		}, p.Log)
