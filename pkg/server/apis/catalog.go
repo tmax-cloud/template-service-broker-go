@@ -115,6 +115,7 @@ func (c *Catalog) MakeService(templateName string, templateSpec *tmaxv1.Template
 			Default:     parameter.Value,
 			Description: parameter.Description,
 			Type:        parameter.ValueType,
+			Regex:       parameter.Regex,
 		}
 		if parameter.Required {
 			requiredParamters = append(requiredParamters, parameter.Name)
