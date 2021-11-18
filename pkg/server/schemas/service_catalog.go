@@ -82,6 +82,7 @@ type PropertiesSpec struct {
 	Title       string             `json:"title,omitempty"`
 	Description string             `json:"description,omitempty"`
 	Type        string             `json:"type,omitempty"`
+	Regex       string             `json:"regex,omitempty"`
 }
 
 type ParamSpec struct {
