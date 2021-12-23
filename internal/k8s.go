@@ -75,8 +75,9 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	template.Parameters = []tmaxv1.ParamSpec{}
 	clusterTemplate.Parameters = []tmaxv1.ParamSpec{}
 
-	name := fmt.Sprintf("%s", request.Context.InstanceName)
+	name := request.Context.InstanceName
 	log.Info(fmt.Sprintf("service instance name: %s", name))
+	log.Info(fmt.Sprintf("service instance namespace: %s", namespace))
 
 	labels := make(map[string]string)
 	labels["serviceInstanceRef"] = request.Context.InstanceName
@@ -120,6 +121,7 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 					// All parameter types filled in UI console have val.Type 1 (string type)
 					return nil, fmt.Errorf("parameter %s must be included", param.Name)
 				}
+				//[TODO]: int type일 경우 UI에서 공란을 어떻게 받는지 확인 필요
 				if val.Type == 0 && val.IntVal == 0 {
 					// [TODO] : Check if it has problems
 					return nil, fmt.Errorf("parameter %s must be included", param.Name)
@@ -153,6 +155,7 @@ func DeleteTemplateInstance(c client.Client, templateInstance *tmaxv1.TemplateIn
 	if err := c.Delete(context.TODO(), templateInstance); err != nil {
 		return err
 	}
+	log.Info(fmt.Sprintf("template instance name: %s is deleted in %s namespace", templateInstance.Name, templateInstance.Namespace))
 	return nil
 }
 
