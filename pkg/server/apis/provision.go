@@ -38,7 +38,7 @@ func (p *Provision) ProvisionServiceInstance(w http.ResponseWriter, r *http.Requ
 	}
 
 	vars := mux.Vars(r)
-	instanceId := vars["instance_Id"]
+	instanceId := vars["instance_id"]
 
 	ns, err := internal.Namespace()
 	if err != nil {
@@ -121,7 +121,7 @@ func (p *Provision) DeprovisionServiceInstance(w http.ResponseWriter, r *http.Re
 	// extract variables
 
 	vars := mux.Vars(r)
-	instanceId := vars["instance_Id"]
+	instanceId := vars["instance_id"]
 
 	ns, err := internal.Namespace()
 	if err != nil {
@@ -162,7 +162,7 @@ func (p *Provision) ClusterProvisionServiceInstance(w http.ResponseWriter, r *ht
 	var m schemas.ServiceInstanceProvisionRequest
 
 	vars := mux.Vars(r)
-	instanceId := vars["instance_Id"]
+	instanceId := vars["instance_id"]
 
 	// get body
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
@@ -228,7 +228,7 @@ func (p *Provision) ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *
 	// extract variables
 	// serviceId := query["service_id"][0]
 	// planId := query["plan_id"][0]
-	instanceId := vars["instance_Id"]
+	instanceId := vars["instance_id"]
 
 	// get templateinstance in all namespace
 	templateInstanceList, err := internal.GetTemplateInstanceList(p.Client, "")

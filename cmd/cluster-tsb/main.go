@@ -18,7 +18,7 @@ const (
 	port                  = 8081
 	apiPathPrefix         = "/v2/"
 	serviceCatalogPrefix  = "/catalog"
-	serviceInstancePrefix = "/service_instances/{instanceId}"
+	serviceInstancePrefix = "/service_instances/{instance_id}"
 	serviceBindingPrefix  = "/service_instances/{instance_id}/service_bindings/{binding_id}"
 )
 
