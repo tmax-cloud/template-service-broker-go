@@ -44,12 +44,12 @@ func GetTemplateInstance(c client.Client, name types.NamespacedName) (*tmaxv1.Te
 	return templateInstance, nil
 }
 
-func GetTemplateInstanceForDeprovision(c client.Client, svcid string, planid string, ns string) (*tmaxv1.TemplateInstance, error) {
+func GetTemplateInstanceForDeprovision(c client.Client, ns string, instanceId string) (*tmaxv1.TemplateInstance, error) {
 	templateInstanceList, _ := GetTemplateInstanceList(c, ns)
 	var templateInstance *tmaxv1.TemplateInstance
 
 	for _, ti := range templateInstanceList.Items {
-		if ti.ObjectMeta.Annotations["uid"] == svcid+"."+planid {
+		if ti.ObjectMeta.Annotations["instance_id"] == instanceId {
 			templateInstance = &ti
 			break
 		}
@@ -68,7 +68,7 @@ func GetTemplateInstanceList(c client.Client, namespace string) (*tmaxv1.Templat
 }
 
 func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
-	request schemas.ServiceInstanceProvisionRequest) (*tmaxv1.TemplateInstance, error) {
+	request schemas.ServiceInstanceProvisionRequest, instanceId string) (*tmaxv1.TemplateInstance, error) {
 	var parameters []tmaxv1.ParamSpec
 	template := &tmaxv1.Template{}
 	clusterTemplate := &tmaxv1.ClusterTemplate{}
@@ -83,7 +83,8 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	labels["serviceInstanceRef"] = request.Context.InstanceName
 
 	annotations := make(map[string]string)
-	annotations["uid"] = request.ServiceId + "." + request.PlanId
+	// annotations["uid"] = request.ServiceId + "." + request.PlanId // Deprecated from TSB 0.1.4
+	annotations["instance_id"] = instanceId
 
 	// form template instance
 	templateInstance := &tmaxv1.TemplateInstance{
@@ -140,6 +141,7 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	// create template instance
 	err := c.Create(context.TODO(), templateInstance)
 	if err == nil { // if no error occurs
+		log.Info(fmt.Sprintf("template instance name: %s is created in %s namespace", templateInstance.Name, templateInstance.Namespace))
 		return templateInstance, err
 	}
 	if !kerrors.IsAlreadyExists(err) { // if the error is not "AlreadyExists" type
