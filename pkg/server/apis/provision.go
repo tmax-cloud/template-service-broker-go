@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/go-logr/logr"
+	"github.com/gorilla/mux"
 	tmaxv1 "github.com/tmax-cloud/template-operator/api/v1"
 	"github.com/tmax-cloud/template-service-broker-go/internal"
 	"github.com/tmax-cloud/template-service-broker-go/pkg/server/schemas"
@@ -36,6 +36,9 @@ func (p *Provision) ProvisionServiceInstance(w http.ResponseWriter, r *http.Requ
 		}, p.Log)
 		return
 	}
+
+	vars := mux.Vars(r)
+	instanceId := vars["instance_Id"]
 
 	ns, err := internal.Namespace()
 	if err != nil {
@@ -94,7 +97,7 @@ func (p *Provision) ProvisionServiceInstance(w http.ResponseWriter, r *http.Requ
 	}
 
 	// create template instance
-	if _, err = internal.CreateTemplateInstance(p.Client, template, ns, m); err != nil {
+	if _, err = internal.CreateTemplateInstance(p.Client, template, ns, m, instanceId); err != nil {
 		p.Log.Error(err, "error occurs while creating template instance")
 		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "Cannot create template instance",
@@ -111,11 +114,14 @@ func (p *Provision) ProvisionServiceInstance(w http.ResponseWriter, r *http.Requ
 func (p *Provision) DeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	query, _ := url.ParseQuery(r.URL.RawQuery)
+	// query, _ := url.ParseQuery(r.URL.RawQuery)
+	// serviceId := query["service_id"][0]
+	// planId := query["plan_id"][0]
 
 	// extract variables
-	serviceId := query["service_id"][0]
-	planId := query["plan_id"][0]
+
+	vars := mux.Vars(r)
+	instanceId := vars["instance_Id"]
 
 	ns, err := internal.Namespace()
 	if err != nil {
@@ -129,7 +135,7 @@ func (p *Provision) DeprovisionServiceInstance(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	templateInstance, err := internal.GetTemplateInstanceForDeprovision(p.Client, serviceId, planId, ns)
+	templateInstance, err := internal.GetTemplateInstanceForDeprovision(p.Client, ns, instanceId)
 	// If there is no templateinstance, deprovision is complete because there is no instance to delete.
 	if err != nil {
 		p.Log.Info("TemplateInstance does not exist")
@@ -154,6 +160,9 @@ func (p *Provision) DeprovisionServiceInstance(w http.ResponseWriter, r *http.Re
 func (p *Provision) ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var m schemas.ServiceInstanceProvisionRequest
+
+	vars := mux.Vars(r)
+	instanceId := vars["instance_Id"]
 
 	// get body
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
@@ -196,7 +205,7 @@ func (p *Provision) ClusterProvisionServiceInstance(w http.ResponseWriter, r *ht
 	updatePlanParams(&m, template.TemplateSpec, string(template.UID))
 
 	// create template instance
-	if _, err = internal.CreateTemplateInstance(p.Client, template, m.Context.Namespace, m); err != nil {
+	if _, err = internal.CreateTemplateInstance(p.Client, template, m.Context.Namespace, m, instanceId); err != nil {
 		p.Log.Error(err, "error occurs while creating template instance")
 		respond(w, http.StatusBadRequest, &schemas.Error{
 			Error:            "Cannot create template instance",
@@ -213,11 +222,13 @@ func (p *Provision) ClusterProvisionServiceInstance(w http.ResponseWriter, r *ht
 func (p *Provision) ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	query, _ := url.ParseQuery(r.URL.RawQuery)
+	// query, _ := url.ParseQuery(r.URL.RawQuery)
+	vars := mux.Vars(r)
 
 	// extract variables
-	serviceId := query["service_id"][0]
-	planId := query["plan_id"][0]
+	// serviceId := query["service_id"][0]
+	// planId := query["plan_id"][0]
+	instanceId := vars["instance_Id"]
 
 	// get templateinstance in all namespace
 	templateInstanceList, err := internal.GetTemplateInstanceList(p.Client, "")
@@ -234,7 +245,7 @@ func (p *Provision) ClusterDeprovisionServiceInstance(w http.ResponseWriter, r *
 
 	var templateInstance *tmaxv1.TemplateInstance
 	for _, ti := range templateInstanceList.Items {
-		if ti.ObjectMeta.Annotations["uid"] == serviceId+"."+planId {
+		if ti.ObjectMeta.Annotations["instance_id"] == instanceId {
 			templateInstance = &ti
 			break
 		}
