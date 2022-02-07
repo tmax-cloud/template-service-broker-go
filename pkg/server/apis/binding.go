@@ -21,6 +21,7 @@ type Binding struct {
 	Log logr.Logger
 }
 
+// [TODO]: instance.status.(cluster)template 으로 변경해야 하는지 확인필요
 func (b *Binding) BindingServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var m schemas.ServiceBindingRequest
