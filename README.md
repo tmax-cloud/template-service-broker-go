@@ -1,6 +1,13 @@
 # Template-Service-Broker
 
-> Template-Service-Broker for HyperCloud Service
+Template operator Service를 Service Catalog를 통해 외부 클러스터에 제공하기 위한 Template Service Broker.
+Template operator Service를 제공하는 클러스터에 TSB / Template-operator를 설치 후,
+Template operator Service를 사용하고자 하는 클러스터에 Service catalog (카탈로그 컨트롤러)를 설치 후 Provision된 Service를 binding 하여 사용함.
+
+![image](https://raw.githubusercontent.com/tmax-cloud/install-tsb/tsb-5.0/manifest/TSB.PNG)  
+①: 카탈로그 컨트롤러  
+②: Template Service Broker에 해당  
+③: Template Service Broker로 생성된 Template Instance에 해당
 
 ## prerequisite Install
 - Template-Operator
