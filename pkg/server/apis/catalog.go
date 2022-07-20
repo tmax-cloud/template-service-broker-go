@@ -206,7 +206,12 @@ func (c *Catalog) MakeService(templateName string, templateSpec *tmaxv1.Template
 			c.Log.Error(err, "cannot get object info")
 		}
 		//get kind, namespace, name of object
-		kind := raw["kind"].(string)
+		kind, ok := raw["kind"].(string)
+		if !ok {
+			c.Log.Info("Checking bindablity is failed")
+			break
+		}
+
 		if strings.Contains(kind, "Service") || strings.Contains(kind, "Secret") {
 			service.Bindable = true
 			break
