@@ -20,6 +20,8 @@ spec:
       - image: tmaxcloudck/cluster-tsb:latest
         name: cluster-tsb
         imagePullPolicy: Always
+        args:
+        - --zap-log-level=error  # log level 설정하기
 ---
 apiVersion: v1
 kind: Service

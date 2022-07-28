@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 
@@ -25,7 +26,12 @@ const (
 var log = logf.Log.WithName("TSB-main")
 
 func main() {
-	logf.SetLogger(zap.Logger(true))
+	opts := zap.Options{
+		Development: false,
+	}
+	opts.BindFlags(flag.CommandLine)
+	flag.Parse()
+	logf.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	log.Info("initializing server....")
 
 	router := mux.NewRouter()
