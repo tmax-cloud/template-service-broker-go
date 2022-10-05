@@ -157,6 +157,62 @@ func (p *Provision) DeprovisionServiceInstance(w http.ResponseWriter, r *http.Re
 	respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{}, p.Log)
 }
 
+func (p *Provision) UpdateClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var m schemas.ServiceInstanceProvisionRequest
+
+	// get body
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		p.Log.Error(err, "error occurs while decoding service instance body")
+		return
+	}
+
+	templates, err := internal.GetClusterTemplateList(p.Client)
+	if err != nil {
+		p.Log.Error(err, "error occurs while getting templateList")
+		respond(w, http.StatusInternalServerError, &schemas.Error{
+			Error:            "InternalServerError",
+			Description:      "cannot find ClusterTemplateList",
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		}, p.Log)
+		return
+	}
+
+	var template *tmaxv1.ClusterTemplate
+	for _, tp := range templates.Items {
+		if m.ServiceId == string(tp.UID) {
+			template = &tp
+			break
+		}
+	}
+
+	if template == nil {
+		p.Log.Error(err, "error occurs while getting template")
+		respond(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "BadRequest",
+			Description:      fmt.Sprintf("cannot find ClusterTemplate %s", m.ServiceId),
+			InstanceUsable:   false,
+			UpdateRepeatable: false,
+		}, p.Log)
+		return
+	}
+
+	// Update template instance
+	if _, err = internal.UpdateTemplateInstance(p.Client, template, m.Context.Namespace, m); err != nil {
+		p.Log.Error(err, "error occurs while updating template instance")
+		respond(w, http.StatusBadRequest, &schemas.Error{
+			Error:            "Cannot update template instance",
+			Description:      "Required parameters may be ommited or templateinstance is not exist",
+			InstanceUsable:   false,
+			UpdateRepeatable: true,
+		}, p.Log)
+		return
+	}
+
+	respond(w, http.StatusOK, schemas.ServiceInstanceProvisionResponse{}, p.Log)
+}
+
 func (p *Provision) ClusterProvisionServiceInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var m schemas.ServiceInstanceProvisionRequest

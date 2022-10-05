@@ -3,4 +3,5 @@ kind: ClusterServiceBroker
 metadata:
   name: hyperbroker5
 spec:
-  url: 'http://cluster-template-service-broker.cluster-tsb-ns.svc.cluster.local:80'
+  # url: 'http://cluster-template-service-broker.cluster-tsb-ns.svc.cluster.local:80'
+  url: 'http://192.168.9.65:8081'

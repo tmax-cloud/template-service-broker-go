@@ -59,6 +59,7 @@ func main() {
 		Log:    logf.Log.WithName("Provision"),
 	}
 	apiRouter.HandleFunc(serviceInstancePrefix, provision.ClusterProvisionServiceInstance).Methods("PUT")
+	apiRouter.HandleFunc(serviceInstancePrefix, provision.UpdateClusterProvisionServiceInstance).Methods("PATCH")
 	apiRouter.HandleFunc(serviceInstancePrefix, provision.ClusterDeprovisionServiceInstance).Methods("DELETE")
 
 	//binding

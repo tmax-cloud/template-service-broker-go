@@ -69,11 +69,8 @@ func GetTemplateInstanceList(c client.Client, namespace string) (*tmaxv1.Templat
 
 func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 	request schemas.ServiceInstanceProvisionRequest, instanceId string) (*tmaxv1.TemplateInstance, error) {
-	var parameters []tmaxv1.ParamSpec
-	template := &tmaxv1.Template{}
-	clusterTemplate := &tmaxv1.ClusterTemplate{}
-	template.Parameters = []tmaxv1.ParamSpec{}
-	clusterTemplate.Parameters = []tmaxv1.ParamSpec{}
+
+	var err error
 
 	name := request.Context.InstanceName
 	log.Info(fmt.Sprintf("service instance name: %s", name))
@@ -96,50 +93,12 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 		},
 	}
 
-	switch obj.(type) {
-	case *tmaxv1.Template:
-		template = obj.(*tmaxv1.Template)
-		templateInstance.Spec.Template = &tmaxv1.ObjectInfo{}
-		templateInstance.Spec.Template.Metadata.Name = template.ObjectMeta.Name
-		templateInstance.Spec.Template.Parameters = template.Parameters
-		//		templateInstance.Spec.Template.Objects = template.Objects  // Deprecated since template operator 0.2.0
-		parameters = templateInstance.Spec.Template.Parameters
-	case *tmaxv1.ClusterTemplate:
-		clusterTemplate = obj.(*tmaxv1.ClusterTemplate)
-		templateInstance.Spec.ClusterTemplate = &tmaxv1.ObjectInfo{}
-		templateInstance.Spec.ClusterTemplate.Metadata.Name = clusterTemplate.ObjectMeta.Name
-		templateInstance.Spec.ClusterTemplate.Parameters = clusterTemplate.Parameters
-		//		templateInstance.Spec.ClusterTemplate.Objects = clusterTemplate.Objects // Deprecated since template operator 0.2.0
-		parameters = templateInstance.Spec.ClusterTemplate.Parameters
-	}
-
-	// check if serviceInstance has required parameters or not
-	for idx, param := range parameters {
-		// if param in serviceInstance
-		if val, ok := request.Parameters[param.Name]; ok { // if a param was given
-			if param.Required {
-				if val.Type == 1 && len(val.StrVal) == 0 {
-					// All parameter types filled in UI console have val.Type 1 (string type)
-					return nil, fmt.Errorf("parameter %s must be included", param.Name)
-				}
-				//[TODO]: int type일 경우 UI에서 공란을 어떻게 받는지 확인 필요
-				if val.Type == 0 && val.IntVal == 0 {
-					// [TODO] : Check if it has problems
-					return nil, fmt.Errorf("parameter %s must be included", param.Name)
-				}
-				parameters[idx].Value = val
-
-			} else {
-				parameters[idx].Value = val
-			}
-
-		} else if param.Required { // if not found && the param was required
-			return nil, fmt.Errorf("parameter %s must be included", param.Name)
-		}
+	if templateInstance, err = UpdateTemplateInstanceMetadata(obj, templateInstance, request); err != nil {
+		return nil, err
 	}
 
 	// create template instance
-	err := c.Create(context.TODO(), templateInstance)
+	err = c.Create(context.TODO(), templateInstance)
 	if err == nil { // if no error occurs
 		log.Info(fmt.Sprintf("template instance name: %s is created in %s namespace", templateInstance.Name, templateInstance.Namespace))
 		return templateInstance, err
@@ -150,6 +109,36 @@ func CreateTemplateInstance(c client.Client, obj interface{}, namespace string,
 
 	// if exists, return the nil
 	log.Info("The same name of template instance is already existing. Please change service instance name")
+	return nil, err
+}
+
+func UpdateTemplateInstance(c client.Client, obj interface{}, namespace string,
+	request schemas.ServiceInstanceProvisionRequest) (*tmaxv1.TemplateInstance, error) {
+
+	instanceName := request.Context.InstanceName
+	log.Info(fmt.Sprintf("service instance name: %s", instanceName))
+	log.Info(fmt.Sprintf("service instance namespace: %s", namespace))
+
+	templateInstance, err := GetTemplateInstance(c, types.NamespacedName{Name: instanceName, Namespace: namespace})
+	if err != nil {
+		log.Info(fmt.Sprintf("template instance update fail: %s", err.Error()))
+		return nil, err
+	}
+
+	updatedTemplateInstance, err := UpdateTemplateInstanceMetadata(obj, templateInstance, request)
+	if err != nil {
+		log.Info(fmt.Sprintf("template instance update fail: %s", err.Error()))
+		return nil, err
+	}
+
+	// Update template instance
+	err = c.Update(context.TODO(), updatedTemplateInstance)
+	if err == nil { // if no error occurs
+		log.Info(fmt.Sprintf("template instance name: %s is updated in %s namespace", updatedTemplateInstance.Name, updatedTemplateInstance.Namespace))
+		return updatedTemplateInstance, err
+	}
+
+	log.Info(fmt.Sprintf("template instance update fail: %s", err.Error()))
 	return nil, err
 }
 
@@ -196,4 +185,58 @@ func Namespace() (string, error) {
 		}
 		return ns, nil
 	}
+}
+
+func UpdateTemplateInstanceMetadata(obj interface{}, templateInstance *tmaxv1.TemplateInstance,
+	request schemas.ServiceInstanceProvisionRequest) (*tmaxv1.TemplateInstance, error) {
+
+	var parameters []tmaxv1.ParamSpec
+	template := &tmaxv1.Template{}
+	clusterTemplate := &tmaxv1.ClusterTemplate{}
+	template.Parameters = []tmaxv1.ParamSpec{}
+	clusterTemplate.Parameters = []tmaxv1.ParamSpec{}
+
+	switch obj.(type) {
+	case *tmaxv1.Template:
+		template = obj.(*tmaxv1.Template)
+		templateInstance.Spec.Template = &tmaxv1.ObjectInfo{}
+		templateInstance.Spec.Template.Metadata.Name = template.ObjectMeta.Name
+		templateInstance.Spec.Template.Parameters = template.Parameters
+		//		templateInstance.Spec.Template.Objects = template.Objects  // Deprecated since template operator 0.2.0
+		parameters = templateInstance.Spec.Template.Parameters
+	case *tmaxv1.ClusterTemplate:
+		clusterTemplate = obj.(*tmaxv1.ClusterTemplate)
+		templateInstance.Spec.ClusterTemplate = &tmaxv1.ObjectInfo{}
+		templateInstance.Spec.ClusterTemplate.Metadata.Name = clusterTemplate.ObjectMeta.Name
+		templateInstance.Spec.ClusterTemplate.Parameters = clusterTemplate.Parameters
+		//		templateInstance.Spec.ClusterTemplate.Objects = clusterTemplate.Objects // Deprecated since template operator 0.2.0
+		parameters = templateInstance.Spec.ClusterTemplate.Parameters
+	}
+
+	// check if serviceInstance has required parameters or not
+	for idx, param := range parameters {
+		// if param in serviceInstance
+		if val, ok := request.Parameters[param.Name]; ok { // if a param was given
+			if param.Required {
+				if val.Type == 1 && len(val.StrVal) == 0 {
+					// All parameter types filled in UI console have val.Type 1 (string type)
+					return nil, fmt.Errorf("parameter %s must be included", param.Name)
+				}
+				//[TODO]: int type일 경우 UI에서 공란을 어떻게 받는지 확인 필요
+				if val.Type == 0 && val.IntVal == 0 {
+					// [TODO] : Check if it has problems
+					return nil, fmt.Errorf("parameter %s must be included", param.Name)
+				}
+				parameters[idx].Value = val
+
+			} else {
+				parameters[idx].Value = val
+			}
+
+		} else if param.Required { // if not found && the param was required
+			return nil, fmt.Errorf("parameter %s must be included", param.Name)
+		}
+	}
+
+	return templateInstance, nil
 }
